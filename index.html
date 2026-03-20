@@ -90,6 +90,31 @@
 
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" id="statsCard"></div>
 
+            <div class="bg-white rounded-xl shadow-sm border border-teal-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span class="text-lg">🧹</span> Clean Deduped Export
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">
+              Downloads a clean JSON file — removes records that are duplicates where the
+              <strong>only difference</strong> are <code>BidDocumentHashes, AddendumDocumentHashes, AwardDocumentHashes</code>.
+              Keeps the latest occurrence. Preserves the original <code>{ "Export": [...] }</code> wrapper.
+            </p>
+          </div>
+          
+          <div class="flex gap-2 ml-4 shrink-0">
+            <button onclick="dlDeduped()"
+              class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold py-2 px-5 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Download Combined &amp; Deduped
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
@@ -127,31 +152,6 @@
           </div>
         </div>
         <div id="dupTable"></div>
-      </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-teal-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div>
-            <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
-              <span class="text-lg">🧹</span> Clean Deduped Export
-            </h2>
-            <p class="text-xs text-gray-400 mt-1">
-              Downloads a clean JSON file — removes records that are duplicates where the
-              <strong>only difference</strong> are <code>BidDocumentHashes, AddendumDocumentHashes, AwardDocumentHashes</code>.
-              Keeps the latest occurrence. Preserves the original <code>{ "Export": [...] }</code> wrapper.
-            </p>
-          </div>
-          
-          <div class="flex gap-2 ml-4 shrink-0">
-            <button onclick="dlDeduped()"
-              class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold py-2 px-5 rounded-lg transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-              </svg>
-              Download Combined &amp; Deduped
-            </button>
-          </div>
-        </div>
       </div>
 
     </div>
