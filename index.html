@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JSON QA Diff Tool</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ajv@8/dist/ajv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ajv@8.12.0/dist/ajv.bundle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsondiffpatch/dist/formatters-html/index.js"></script>
   <style>body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}</style>
 </head>
@@ -41,7 +41,15 @@
     <div id="result" class="p-6 border rounded-lg bg-white dark:bg-gray-800 min-h-64 overflow-auto"></div>
   </div>
   <script>
-    const ajv = new Ajv({allErrors: true, verbose: true});
+    // Safe AJV init with fallback
+    let ajv;
+    try {
+    ajv = new Ajv({ allErrors: true, verbose: true });
+    } catch (e) {
+    console.error('AJV load failed:', e);
+    document.getElementById('result').innerHTML = '<div class="bg-yellow-100 p-4 rounded text-center">Warning: Schema validation unavailable (CDN issue). Diff still works.</div>';
+    }
+
     let currentDiff = null;
     function toggleDark() {
       document.documentElement.classList.toggle('dark');
