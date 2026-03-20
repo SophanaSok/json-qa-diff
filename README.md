@@ -3,71 +3,118 @@
 [![GitHub Pages](https://github.com/SophanaSok/json-qa-diff/actions/workflows/pages/pages-build-deployment/badge.svg)](https://SophanaSok.github.io/json-qa-diff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**JSON QA Diff Tool** is a lightweight browser app for validating JSON against a schema and comparing two JSON documents with a clear visual diff. Ideal for data quality checks, API response comparison, config drift detection, and CSV-export diff validation.
+**JSON QA Diff Tool** is a lightweight browser app for comparing two JSON export files, detecting record-level differences, and identifying duplicate records. Ideal for bid reconciliation, data migration validation, export verification, and quality assurance workflows.
 
 - Runs fully in-browser (no server/backend)
-- Drag/drop + paste input
-- Immediate schema validation feedback
-- Diff with highlighted additions/changes/removals
-- Download diff as JSON
+- File upload for JSON exports
+- Record-level diff detection (added, removed, changed)
+- Duplicate detection (within-file and cross-file)
+- Downloadable diff and duplicate reports
+- Configurable unique key and ignore fields
 
 ## 🔍 Why use this?
 
-1. Save time validating JSON shape and required fields before integration or testing.
-2. Compare output from step A vs step B (e.g., CSV-to-JSON, API snapshot, config updates).
-3. Avoid manual `diff` errors with structured, data-aware comparison.
+1. **Bid Reconciliation**: Compare bid exports from different sources or time periods.
+2. **Data Quality**: Detect duplicates automatically and highlight schema mismatches.
+3. **Export Verification**: Validate changes between export snapshots without manual review.
+4. **Migration QA**: Ensure data integrity when moving records between systems.
 
 ## ✨ Features
 
-- Drag/drop file upload for both JSON inputs
-- Paste JSON directly into side-by-side text areas
-- Editable JSON Schema validator (AJV)
-- Visual diff rendering (jsondiffpatch)
-- Results panel with inline error display
-- Export diff as `json-diff.json`
-- Dark / light theme toggle
+- Upload two JSON files for comparison
+- Automatic record-level diffing using a configurable unique key (default: `ProjectCode`)
+- Three-category diff visualization: **Added**, **Removed**, **Changed**
+- Comprehensive statistics dashboard:
+  - Record counts per file
+  - Counts for added/removed/changed records
+  - Duplicate detection (within-file and cross-file)
+  - Schema mismatch warnings
+- Detailed diff table with expandable field-level changes
+- Duplicate records table with source tracking
+- Configurable fields to ignore in duplicate detection
+- Download diff records as JSON
+- Download duplicate sets as JSON (File 1, File 2, Cross-File)
 - Works offline from static file or GitHub Pages
 
 ## 🚀 Quick Start (Local)
 
 1. Open `index.html` in your browser
-2. Drop or paste two JSON documents into their fields
-3. Confirm or update the schema in the schema editor
-4. Click **Validate & Diff**
-5. Review results in the output panel
-6. Click **Export Diff** to save a patch file
+2. Upload **File 1** (baseline/older export) and **File 2** (newer/comparison export)
+3. Verify or update the **Unique Key** field (default: `ProjectCode`)
+4. Configure **Ignore Fields** for duplicate detection (comma-separated; default: `Created,Modified,Refreshed`)
+5. Click **Analyze** to compare the files
+6. Review the **Summary**, **Diff Records**, and **Duplicate Records** panels
+7. Download JSON reports using the **Download Diff JSON** or duplicate export buttons
 
-## 🧪 Example schema
+## 📋 Expected JSON Format
+
+The tool expects JSON files containing arrays of record objects. Supported formats:
 
 ```json
+// Option 1: Plain array
+[
+  { "ProjectCode": "P001", "Title": "Project A", "BidStatus": "Open" },
+  { "ProjectCode": "P002", "Title": "Project B", "BidStatus": "Closed" }
+]
+```
+
+```json
+// Option 2: Object with array in "Export" key
 {
-  "type": "array",
-  "items": {
-    "type": "object",
-    "properties": {
-      "id": {"type": "string"},
-      "name": {"type": "string"},
-      "value": {"type": "number"}
-    },
-    "required": ["id", "name"],
-    "additionalProperties": false
-  }
+  "Export": [
+    { "ProjectCode": "P001", "Title": "Project A", "BidStatus": "Open" },
+    { "ProjectCode": "P002", "Title": "Project B", "BidStatus": "Closed" }
+  ]
 }
 ```
 
-## 🛠️ App behavior
+```json
+// Option 3: Object with array in first key
+{
+  "records": [
+    { "ProjectCode": "P001", "Title": "Project A", "BidStatus": "Open" },
+    { "ProjectCode": "P002", "Title": "Project B", "BidStatus": "Closed" }
+  ]
+}
+```
 
-- Schema parse errors appear as a red error card.
-- If either JSON fails validation, diff is skipped and error details show.
-- If both JSON inputs validate, a structured diff highlights:
-  - `+` additions
-  - `-` deletions
-  - `~` updates
+## 🛠️ App Behavior
+
+### Diff Detection
+- The tool matches records between files using the configured **Unique Key** (default: `ProjectCode`)
+- For each matched pair, it compares all fields and identifies which ones changed
+- Records are categorized as:
+  - **Added**: Present in File 2 but not File 1
+  - **Removed**: Present in File 1 but not File 2
+  - **Changed**: Present in both files with different field values
+
+### Schema Mismatch Warning
+- If File 1 and File 2 have different column/field names, a yellow warning appears in the summary
+- This helps identify structural issues between exports
+
+### Duplicate Detection
+- Duplicates are detected within each file independently
+- The comparison ignores specified fields (default: `Created`, `Modified`, `Refreshed`)
+- Hashes are computed from remaining fields to identify duplicate records
+- Three categories of duplicates are tracked:
+  - **Within-file (File 1)**: Duplicates found only in File 1
+  - **Within-file (File 2)**: Duplicates found only in File 2
+  - **Cross-file**: Identical records found in both files
+
+### Download Reports
+- **Diff Report**: JSON file containing all added, removed, and changed records with field-level changes
+- **File 1 Dups**: JSON file containing duplicate records found in File 1
+- **File 2 Dups**: JSON file containing duplicate records found in File 2
+- **Cross-File Dups**: JSON file containing records that appear identically in both files
 
 ## 📌 Notes
 
-- This is a client-side tool; no data leaves your browser.
-- For large files, use local editing and then import to avoid browser lag.
+- This is a **client-side tool** — no data leaves your browser or is sent to any server
+- Both files are processed entirely in your browser using JavaScript
+- The tool supports JSON files with arrays of objects (records)
+- Unique key field must exist in both files for proper record matching
+- For large files (1000+ records), performance will depend on your browser/machine
+- Fields listed in "Ignore Fields" are excluded from duplicate checks but still shown in results
 
 ## 🧩 Contribute
 
