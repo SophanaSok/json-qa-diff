@@ -181,15 +181,35 @@ function dlDeduped() {
   if (!state.arr1raw || !state.arr2raw) return alert('Please run Analyze first.');
 
   const ignored = getIgnored();
-  const merged = [...state.arr1raw, ...state.arr2raw];
+  const uk = state.uk;
   const seen = new Map();
 
-  for (const r of merged) {
-    const filtered = {};
-    for (const k of Object.keys(r).sort()) {
-      if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = r[k];
+  // Seed map with all File 1 records keyed by ProjectCode
+  for (const r of state.arr1raw) {
+    seen.set(r[uk], r);
+  }
+
+  // Process File 2 records
+  for (const r2 of state.arr2raw) {
+    const key = r2[uk];
+    const r1 = seen.get(key);
+
+    if (r1) {
+      const hashObj = (obj) => {
+        const filtered = {};
+        for (const k of Object.keys(obj).sort()) {
+          if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = obj[k];
+        }
+        return JSON.stringify(filtered);
+      };
+      // Only overwrite if fields OTHER than BidDocumentHashes actually changed
+      if (hashObj(r1) !== hashObj(r2)) {
+        seen.set(key, r2); // real update — keep File 2 version
+      }
+      // else: identical except BidDocumentHashes → true dup, keep File 1, skip File 2
+    } else {
+      seen.set(key, r2); // new record only in File 2 — include it
     }
-    seen.set(JSON.stringify(filtered), r);
   }
 
   const deduped = [...seen.values()];
