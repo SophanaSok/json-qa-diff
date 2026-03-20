@@ -50,73 +50,93 @@
     document.getElementById('result').innerHTML = '<div class="bg-yellow-100 p-4 rounded text-center">Warning: Schema validation unavailable (CDN issue). Diff still works.</div>';
     }
 
-    let currentDiff = null;
-    function toggleDark() {
-      document.documentElement.classList.toggle('dark');
+    let ajvInstance;
+    try {
+        ajvInstance = new Ajv({allErrors: true, verbose: true});
+    } catch (e) {
+        console.error('AJV init failed:', e);
     }
-    // Drag-drop handlers
-    ['file1','file2'].forEach(id => {
-      const input = document.getElementById(id);
-      const dropZone = input.parentElement;
-      dropZone.ondragover = e => e.preventDefault();
-      dropZone.ondrop = e => {
+    let currentDiff = null;
+
+    function toggleDark() {
+        document.documentElement.classList.toggle('dark');
+    }
+
+    // Drag-drop for file inputs
+    ['file1', 'file2'].forEach(id => {
+        const input = document.getElementById(id);
+        const dropZone = input.parentNode;
+        dropZone.ondragover = e => e.preventDefault();
+        dropZone.ondrop = e => {
         e.preventDefault();
         input.files = e.dataTransfer.files;
         readFile(input);
-      };
+        };
+        input.onchange = () => readFile(input);
     });
+
     function readFile(input) {
-      if (input.files[0]) {
+        if (input.files[0]) {
         const reader = new FileReader();
         reader.onload = e => {
-          const taId = input.id === 'file1' ? 'json1' : 'json2';
-          document.getElementById(taId).value = e.target.result;
+            const taId = input.id === 'file1' ? 'json1' : 'json2';
+            document.getElementById(taId).value = e.target.result;
         };
         reader.readAsText(input.files[0]);
-      }
+        }
     }
+
     function processJSON() {
-      const json1 = document.getElementById('json1').value;
-      const json2 = document.getElementById('json2').value;
-      const schemaText = document.getElementById('schema').value;
-      try {
-        const schema = JSON.parse(schemaText);
-        const obj1 = JSON.parse(json1);
-        const validate1 = ajv.compile(schema);
-        if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
-        const obj2 = JSON.parse(json2);
-        const validate2 = ajv.compile(schema);
-        if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
+        const json1 = document.getElementById('json1').value;
+        const json2 = document.getElementById('json2').value;
+        const schemaText = document.getElementById('schema').value;
+        const resultEl = document.getElementById('result');
+        try {
+        let obj1 = JSON.parse(json1);
+        let obj2 = JSON.parse(json2);
+        
+        // Schema validation if available
+        if (ajvInstance && schemaText.trim()) {
+            const schema = JSON.parse(schemaText);
+            const validate1 = ajvInstance.compile(schema);
+            if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
+            const validate2 = ajvInstance.compile(schema);
+            if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
+            resultEl.innerHTML = '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files schema-valid!</strong></div>';
+        } else if (ajvInstance) {
+            resultEl.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900 p-4 rounded mb-4"><strong>ℹ️ Skipping schema (empty)—proceed to diff.</strong></div>';
+        }
+        
         currentDiff = jsondiffpatch.diff(obj1, obj2);
-        document.getElementById('result').innerHTML = 
-          '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files valid!</strong></div>' +
-          jsondiffpatch.formatters.html.format(currentDiff, obj1);
-      } catch (e) {
-        document.getElementById('result').innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
-      }
+        resultEl.innerHTML += jsondiffpatch.formatters.html.format(currentDiff, obj1);
+        } catch (e) {
+        resultEl.innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
+        }
     }
+
     function formatErrors(errors) {
-      return errors.map(err => `${err.instancePath} ${err.message}`).join('; ');
+        return errors.map(err => `${err.instancePath || '/'} ${err.message}`).join('; ');
     }
+
     function exportDiff() {
-      if (currentDiff) {
+        if (currentDiff) {
         const blob = new Blob([JSON.stringify(currentDiff, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'json-diff.json'; a.click();
-      }
+        a.href = url; a.download = 'json-qa-diff.json'; a.click(); URL.revokeObjectURL(url);
+        } else {
+        alert('Run diff first!');
+        }
     }
+
     function clearAll() {
-      document.getElementById('json1').value = '';
-      document.getElementById('json2').value = '';
-      document.getElementById('schema').value = '{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}';
-      document.getElementById('result').innerHTML = '';
-      currentDiff = null;
-      document.querySelectorAll('input[type="file"]').forEach(i => i.value = '');
+        ['json1', 'json2', 'schema'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('schema').value = '{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}';
+        document.getElementById('result').innerHTML = '';
+        currentDiff = null;
+        document.querySelectorAll('input[type="file"]').forEach(i => i.value = '');
     }
-    // File input change handlers
-    document.getElementById('file1').onchange = () => readFile(document.getElementById('file1'));
-    document.getElementById('file2').onchange = () => readFile(document.getElementById('file2'));
-  </script>
+</script>
+
 </body>
 </html>
