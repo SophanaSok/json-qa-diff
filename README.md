@@ -34,6 +34,7 @@
 - Configurable fields to ignore in duplicate detection
 - Download diff records as JSON
 - Download duplicate sets as JSON (File 1, File 2, Cross-File)
+- Download deduplicated file versions (removes duplicate records)
 - Works offline from static file or GitHub Pages
 
 ## 🚀 Quick Start (Local)
@@ -106,6 +107,13 @@ The tool expects JSON files containing arrays of record objects. Supported forma
 - **File 1 Dups**: JSON file containing duplicate records found in File 1
 - **File 2 Dups**: JSON file containing duplicate records found in File 2
 - **Cross-File Dups**: JSON file containing records that appear identically in both files
+- **Deduped File 1**: Deduplicated version of File 1 (removes duplicate records, keeping the latest)
+- **Deduped File 2**: Deduplicated version of File 2 (removes duplicate records, keeping the latest)
+
+### Deduplication Logic
+- Within-file deduplication compares all fields except `BidDocumentHashes` and the configured ignore fields
+- When duplicates are found, the tool keeps the latest version of each record
+- Deduped file exports maintain the original JSON structure (plain array or wrapped format)
 
 ## 📌 Notes
 
