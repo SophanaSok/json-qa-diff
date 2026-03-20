@@ -180,17 +180,33 @@ async function run() {
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 }
 
-function dlDeduped(which) {
-  const arr = which === 'file1' ? state.deduped1 : state.deduped2;
-  const originalWrapper = which === 'file1' ? state.raw1 : state.raw2;
-  let out;
-  if (!Array.isArray(originalWrapper) && typeof originalWrapper === 'object') {
-    const wrapKey = Object.keys(originalWrapper)[0];
-    out = { [wrapKey]: arr };
-  } else {
-    out = arr;
+function dlDeduped() {
+  const merged = [...state.arr1raw, ...state.arr2raw];
+  const ignored = getIgnored();
+
+  function hashIgnoringBidDocs(obj) {
+    const filtered = {};
+    for (const k of Object.keys(obj).sort()) {
+      if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = obj[k];
+    }
+    return JSON.stringify(filtered);
   }
-  download(`deduped_${which}.json`, out);
+
+  const seen = new Map();
+  for (const r of merged) {
+    seen.set(hashIgnoringBidDocs(r), r); // overwrite → file2 wins
+  }
+  const deduped = [...seen.values()];
+
+  let out;
+  if (!Array.isArray(state.raw1) && typeof state.raw1 === 'object') {
+    const wrapKey = Object.keys(state.raw1)[0];
+    out = { [wrapKey]: deduped };
+  } else {
+    out = deduped;
+  }
+
+  download('combined_deduped.json', out);
 }
 
 function dlDiff() {
