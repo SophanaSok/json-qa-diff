@@ -1,34 +1,43 @@
 # JSON QA Diff Tool 🚀
 
-[![GitHub Pages](https://github.com/YOURUSERNAME/json-qa-diff/actions/workflows/pages/pages-build-deployment/badge.svg)](https://YOURUSERNAME.github.io/json-qa-diff/)
+[![GitHub Pages](https://github.com/SophanaSok/json-qa-diff/actions/workflows/pages/pages-build-deployment/badge.svg)](https://SophanaSok.github.io/json-qa-diff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight, **client-side** web app to **validate JSON schemas** and **diff files** for data QA. Perfect for comparing CSV-to-JSON outputs, API responses, or configs. No server needed—runs in any browser.
+**JSON QA Diff Tool** is a lightweight browser app for validating JSON against a schema and comparing two JSON documents with a clear visual diff. Ideal for data quality checks, API response comparison, config drift detection, and CSV-export diff validation.
 
-[Live Demo](https://YOURUSERNAME.github.io/json-qa-diff/) | [Download HTML](https://YOURUSERNAME.github.io/json-qa-diff/index.html)
+- Runs fully in-browser (no server/backend)
+- Drag/drop + paste input
+- Immediate schema validation feedback
+- Diff with highlighted additions/changes/removals
+- Download diff as JSON
 
-![Screenshot](screenshot.png)
-*(Add a screenshot of the app in action)*
+## 🔍 Why use this?
+
+1. Save time validating JSON shape and required fields before integration or testing.
+2. Compare output from step A vs step B (e.g., CSV-to-JSON, API snapshot, config updates).
+3. Avoid manual `diff` errors with structured, data-aware comparison.
 
 ## ✨ Features
-- **Drag & drop** or paste JSON files/textareas
-- **Schema validation** with editable JSON Schema (AJV-powered)
-- **Visual semantic diff** (added/removed/changed highlighted) via jsondiffpatch
-- **Export diff** as JSON file
-- **Dark/Light mode**, responsive design (Tailwind CSS)
-- **Offline/PWA-ready** (~10KB gzipped)
-- **Zero dependencies** beyond CDNs
 
-## ⚡ Quick Start
-1. [Click the live demo](https://YOURUSERNAME.github.io/json-qa-diff/)
-2. Drag two JSON files or paste content
-3. Edit schema (e.g., require `"id"` field)
-4. Click **Validate & Diff** → See results/export
+- Drag/drop file upload for both JSON inputs
+- Paste JSON directly into side-by-side text areas
+- Editable JSON Schema validator (AJV)
+- Visual diff rendering (jsondiffpatch)
+- Results panel with inline error display
+- Export diff as `json-diff.json`
+- Dark / light theme toggle
+- Works offline from static file or GitHub Pages
 
-**CLI alternative?** Use `jq` or `jsondiffpatch` npm.[web:9]
+## 🚀 Quick Start (Local)
 
-## 📋 Example Schema
-For keyed CSV JSON (array of `{id: "...", name: "..."}`):
+1. Open `index.html` in your browser
+2. Drop or paste two JSON documents into their fields
+3. Confirm or update the schema in the schema editor
+4. Click **Validate & Diff**
+5. Review results in the output panel
+6. Click **Export Diff** to save a patch file
+
+## 🧪 Example schema
 
 ```json
 {
@@ -36,11 +45,36 @@ For keyed CSV JSON (array of `{id: "...", name: "..."}`):
   "items": {
     "type": "object",
     "properties": {
-      "id": { "type": "string" },
-      "name": { "type": "string", "minLength": 1 },
-      "value": { "type": "number" }
+      "id": {"type": "string"},
+      "name": {"type": "string"},
+      "value": {"type": "number"}
     },
     "required": ["id", "name"],
     "additionalProperties": false
   }
 }
+```
+
+## 🛠️ App behavior
+
+- Schema parse errors appear as a red error card.
+- If either JSON fails validation, diff is skipped and error details show.
+- If both JSON inputs validate, a structured diff highlights:
+  - `+` additions
+  - `-` deletions
+  - `~` updates
+
+## 📌 Notes
+
+- This is a client-side tool; no data leaves your browser.
+- For large files, use local editing and then import to avoid browser lag.
+
+## 🧩 Contribute
+
+1. Fork the repo
+2. Edit `index.html` or add tests/docs
+3. Submit PR
+
+## 📄 License
+
+MIT
