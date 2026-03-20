@@ -31,6 +31,18 @@ function fieldDiff(a, b) {
   return changes;
 }
 
+function dedupArray(arr, ignored) {
+  const seen = new Map();
+  for (const r of arr) {
+    const filtered = {};
+    for (const k of Object.keys(r).sort()) {
+      if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = r[k];
+    }
+    seen.set(JSON.stringify(filtered), r);
+  }
+  return [...seen.values()];
+}
+
 async function run() {
   const f1 = document.getElementById('file1').files[0];
   const f2 = document.getElementById('file2').files[0];
@@ -62,7 +74,9 @@ async function run() {
     const r1 = map1.get(key), r2 = map2.get(key);
     if (r1 && r2) {
       const changes = fieldDiff(r1, r2);
-      if (Object.keys(changes).length > 0) diffs.push({ type: 'changed', key, changes, record: r2 });
+      if (Object.keys(changes).length > 0) {
+        diffs.push({ type: 'changed', key, changes, record: r2 });
+      }
     } else if (r1) {
       diffs.push({ type: 'removed', key, record: r1 });
     } else {
@@ -94,29 +108,10 @@ async function run() {
     }
   }
 
-  state = { diffs, dups1, dups2, crossDups, uk };
+  const deduped1 = dedupArray(arr1, ignored);
+  const deduped2 = dedupArray(arr2, ignored);
 
-  function hashIgnoringBidDocs(obj) {
-  const filtered = {};
-  for (const k of Object.keys(obj).sort()) {
-    if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = obj[k];
-  }
-  return JSON.stringify(filtered);
-  }
-
-  function dedupArray(arr) {
-    const seen = new Map();
-    for (const r of arr) {
-      const h = hashIgnoringBidDocs(r);
-      seen.set(h, r); // always overwrite → keeps latest
-    }
-    return [...seen.values()];
-  }
-
-  const deduped1 = dedupArray(arr1);
-  const deduped2 = dedupArray(arr2);
-
-  state = { diffs, dups1, dups2, crossDups, uk, deduped1, deduped2, raw1, raw2 };
+  state = { diffs, dups1, dups2, crossDups, uk, deduped1, deduped2, raw1, raw2, arr1raw: arr1, arr2raw: arr2 };
 
   const added   = diffs.filter(d => d.type === 'added').length;
   const removed = diffs.filter(d => d.type === 'removed').length;
@@ -125,7 +120,7 @@ async function run() {
   document.getElementById('statsCard').innerHTML = `
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">📊 Summary</h2>
     ${!schemaMatch ? '<div class="text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm mb-3">⚠️ Schema mismatch detected between files.</div>' : ''}
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3">
       <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-slate-700">${arr1.length}</div><div class="text-xs text-slate-400 mt-0.5">File 1 Records</div></div>
       <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-slate-700">${arr2.length}</div><div class="text-xs text-slate-400 mt-0.5">File 2 Records</div></div>
       <div class="bg-green-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-green-700">${added}</div><div class="text-xs text-green-500 mt-0.5">Added</div></div>
@@ -133,6 +128,8 @@ async function run() {
       <div class="bg-yellow-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-yellow-700">${changed}</div><div class="text-xs text-yellow-500 mt-0.5">Changed</div></div>
       <div class="bg-violet-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-violet-700">${dups1.length + dups2.length}</div><div class="text-xs text-violet-400 mt-0.5">Within-file Dups</div></div>
       <div class="bg-violet-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-violet-700">${crossDups.length}</div><div class="text-xs text-violet-400 mt-0.5">Cross-file Dups</div></div>
+      <div class="bg-teal-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-teal-700">${arr1.length - deduped1.length}</div><div class="text-xs text-teal-500 mt-0.5">Removed (File 1)</div></div>
+      <div class="bg-teal-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-teal-700">${arr2.length - deduped2.length}</div><div class="text-xs text-teal-500 mt-0.5">Removed (File 2)</div></div>
     </div>`;
 
   const dtHTML = diffs.length === 0
@@ -209,7 +206,12 @@ function dlDeduped() {
 }
 
 function dlDiff() {
-  const out = state.diffs.map(d => ({ ProjectCode: d.key, type: d.type, changes: d.changes || null, record: d.record }));
+  const out = state.diffs.map(d => ({
+    ProjectCode: d.key,
+    type: d.type,
+    changes: d.changes || null,
+    record: d.record
+  }));
   download('diff_records.json', out);
 }
 
