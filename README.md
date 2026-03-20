@@ -34,7 +34,7 @@
 - Configurable fields to ignore in duplicate detection
 - Download diff records as JSON
 - Download duplicate sets as JSON (File 1, File 2, Cross-File)
-- Download deduplicated file versions (removes duplicate records)
+- Download combined deduplicated export (removes duplicates across both files)
 - Works offline from static file or GitHub Pages
 
 ## 🚀 Quick Start (Local)
@@ -44,8 +44,8 @@
 3. Verify or update the **Unique Key** field (default: `ProjectCode`)
 4. Configure **Ignore Fields** for duplicate detection (comma-separated; default: `Created,Modified,Refreshed`)
 5. Click **Analyze** to compare the files
-6. Review the **Summary**, **Diff Records**, and **Duplicate Records** panels
-7. Download JSON reports using the **Download Diff JSON** or duplicate export buttons
+6. Review the **Summary**, **Diff Records**, **Duplicate Records**, and **Clean Deduped Export** panels
+7. Download JSON reports using the various download buttons
 
 ## 📋 Expected JSON Format
 
@@ -107,13 +107,12 @@ The tool expects JSON files containing arrays of record objects. Supported forma
 - **File 1 Dups**: JSON file containing duplicate records found in File 1
 - **File 2 Dups**: JSON file containing duplicate records found in File 2
 - **Cross-File Dups**: JSON file containing records that appear identically in both files
-- **Deduped File 1**: Deduplicated version of File 1 (removes duplicate records, keeping the latest)
-- **Deduped File 2**: Deduplicated version of File 2 (removes duplicate records, keeping the latest)
+- **Combined & Deduped**: Single deduplicated file combining both inputs (removes duplicates across files, keeping the latest version)
 
 ### Deduplication Logic
-- Within-file deduplication compares all fields except `BidDocumentHashes` and the configured ignore fields
-- When duplicates are found, the tool keeps the latest version of each record
-- Deduped file exports maintain the original JSON structure (plain array or wrapped format)
+- Cross-file deduplication compares all fields except `BidDocumentHashes` and the configured ignore fields
+- When duplicates are found across both files, the tool keeps the latest version of each record (File 2 takes precedence)
+- The combined deduplicated export maintains the original JSON structure (plain array or wrapped format)
 
 ## 📌 Notes
 
