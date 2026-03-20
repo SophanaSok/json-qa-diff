@@ -12,6 +12,10 @@ function getIgnored() {
   return document.getElementById('ignoreFields').value.split(',').map(s => s.trim()).filter(Boolean);
 }
 
+function getDedupeFields() {
+  return document.getElementById('dedupeFields').value.split(',').map(s => s.trim()).filter(Boolean);
+}
+
 function recordHash(obj, ignoreFields) {
   const filtered = {};
   for (const k of Object.keys(obj).sort()) {
@@ -57,9 +61,13 @@ function normDocs(val) {
 const DOC_FIELDS  = ['BidDocuments', 'AddendumDocuments', 'AwardDocuments'];
 const HASH_FIELDS = ['BidDocumentHashes', 'AddendumDocumentHashes', 'AwardDocumentHashes'];
 
-function coreHash(obj, ignored) {
+function coreHash(obj, ignored, dedupeFields) {
   const filtered = {};
-  for (const k of Object.keys(obj).sort()) {
+  const keys = dedupeFields && dedupeFields.length > 0
+    ? dedupeFields
+    : Object.keys(obj).sort().filter(k => !ignored.includes(k) && !HASH_FIELDS.includes(k));
+
+  for (const k of keys) {
     if (ignored.includes(k))     continue;
     if (HASH_FIELDS.includes(k)) continue;
     if (DOC_FIELDS.includes(k))  { filtered[k] = normDocs(obj[k]); continue; }
@@ -206,6 +214,7 @@ function dlDeduped() {
   if (!state.arr1raw || !state.arr2raw) return alert('Please run Analyze first.');
 
   const ignored = getIgnored();
+  const dedupeFields = getDedupeFields();
   const uk = state.uk;
   const map1 = new Map(state.arr1raw.map(r => [r[uk], r]));
   const result = [];
@@ -214,7 +223,7 @@ function dlDeduped() {
     const r1 = map1.get(r2[uk]);
     if (!r1) {
       result.push(r2);                                        // new record — include
-    } else if (coreHash(r1, ignored) !== coreHash(r2, ignored)) {
+    } else if (coreHash(r1, ignored, dedupeFields) !== coreHash(r2, ignored, dedupeFields)) {
       result.push(r2);                                        // real change — include File 2 version
     }
     // else: true duplicate (only Hash/URL noise differs) — skip
