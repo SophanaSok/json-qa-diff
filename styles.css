@@ -1,0 +1,45 @@
+#diffTable table,
+#dupTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+#diffTable th,
+#dupTable th {
+  background: #f8faff;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#diffTable td,
+#dupTable td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+  color: #334155;
+}
+#diffTable tr:hover td,
+#dupTable tr:hover td {
+  background: #f8faff;
+}
+details summary {
+  cursor: pointer;
+  color: #2563eb;
+  font-size: 0.78rem;
+}
+details pre {
+  background: #f8faff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  max-height: 160px;
+  margin-top: 6px;
+  color: #1e293b;
+}

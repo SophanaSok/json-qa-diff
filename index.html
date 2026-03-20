@@ -2,144 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JSON QA Diff Tool</title>
+  <title>JSON Diff & QA – Bid Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ajv@8.12.0/dist/ajv.bundle.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsondiffpatch/dist/formatters-html/index.js"></script>
-  <style>body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}</style>
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen p-8">
-  <div class="max-w-6xl mx-auto">
-    <header class="text-center mb-8">
-      <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">JSON QA Diff Tool</h1>
-      <p class="text-lg opacity-75">Validate schemas & diff JSON files client-side. By Sophana Sok</p>
-      <p class="text-xs mt-1 text-gray-600 dark:text-gray-400">Need a quick start? jump to <a href="README.md#-quick-start-local" target="_blank" class="underline text-blue-500 hover:text-blue-700">README Quick Start</a>.</p>
-      <button onclick="toggleDark()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark Mode</button>
-    </header>
-    <div class="grid md:grid-cols-2 gap-6 mb-6">
+<body class="bg-gray-100 min-h-screen">
+
+  <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
+      <span class="text-2xl">📋</span>
       <div>
-        <label class="block text-sm font-medium mb-2">File 1 (drag/drop or click)</label>
-        <input type="file" id="file1" accept=".json" class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400">
-        <textarea id="json1" rows="10" class="w-full mt-2 p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm" placeholder="Paste JSON here..."></textarea>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-2">File 2</label>
-        <input type="file" id="file2" accept=".json" class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400">
-        <textarea id="json2" rows="10" class="w-full mt-2 p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm" placeholder="Paste JSON here..."></textarea>
+        <h1 class="text-lg font-semibold text-gray-800 leading-tight">JSON Diff & QA Tool</h1>
+        <p class="text-xs text-gray-400">Compare bid export files · Detect changes & duplicates · Download results</p>
       </div>
     </div>
-    <div class="mb-6">
-      <label class="block text-sm font-medium mb-2">JSON Schema (edit for custom validation)</label>
-      <textarea id="schema" rows="4" class="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm">{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}</textarea>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- Config Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Configuration</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">File 1 <span class="text-gray-400">(baseline / older)</span></label>
+          <input type="file" id="file1" accept=".json"
+            class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">File 2 <span class="text-gray-400">(newer / comparison)</span></label>
+          <input type="file" id="file2" accept=".json"
+            class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Unique Key</label>
+          <input type="text" id="uniqueKey" value="ProjectCode"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+        <div class="flex items-end">
+          <button onclick="run()"
+            class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-150 flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-6.586-6.586A1 1 0 006.5 5.5v13a1 1 0 001.666.748l6.586-5.668a1 1 0 000-1.412z"/>
+            </svg>
+            Analyze
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+        </svg>
+        Ignore fields for duplicate check (comma-separated):
+        <input type="text" id="ignoreFields" value="Created,Modified,Refreshed"
+          class="border border-gray-200 rounded px-2 py-0.5 text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-300 w-64">
+      </div>
     </div>
-    <div class="flex gap-4 mb-6">
-      <button onclick="processJSON()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Validate & Diff</button>
-      <button onclick="exportDiff()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Export Diff</button>
-      <button onclick="clearAll()" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium">Clear</button>
+
+    <!-- Results -->
+    <div id="results" class="hidden space-y-6">
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" id="statsCard"></div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+            <span class="text-lg">🔀</span> Diff Records
+          </h2>
+          <button onclick="dlDiff()"
+            class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Download Diff JSON
+          </button>
+        </div>
+        <div id="diffTable"></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+            <span class="text-lg">♻️</span> Duplicate Records
+          </h2>
+          <div class="flex gap-2">
+            <button onclick="dlDups('file1')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+              File 1 Dups
+            </button>
+            <button onclick="dlDups('file2')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+              File 2 Dups
+            </button>
+            <button onclick="dlDups('cross')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+              Cross-File Dups
+            </button>
+          </div>
+        </div>
+        <div id="dupTable"></div>
+      </div>
+
     </div>
-    <div id="result" class="p-6 border rounded-lg bg-white dark:bg-gray-800 min-h-64 overflow-auto"></div>
-  </div>
-  <script>
-    // Safe AJV init with CDN fallback
-    let ajvAvailable = false;
-    let ajvInstance = null;
-    try {
-      if (typeof Ajv !== 'function') throw new Error('AJV constructor not available');
-      ajvInstance = new Ajv({ allErrors: true, verbose: true });
-      ajvAvailable = true;
-    } catch (e) {
-      console.warn('AJV load/init failed:', e);
-      const resultEl = document.getElementById('result');
-      if (resultEl) {
-        resultEl.innerHTML = '<div class="bg-yellow-100 dark:bg-yellow-900 p-4 rounded text-center">⚠️ Warning: Schema validation unavailable (CDN issue). Diff still works.</div>';
-      }
-    }
-    let currentDiff = null;
+  </main>
 
-    function toggleDark() {
-        document.documentElement.classList.toggle('dark');
-    }
-
-    // Drag-drop for file inputs
-    ['file1', 'file2'].forEach(id => {
-        const input = document.getElementById(id);
-        const dropZone = input.parentNode;
-        dropZone.ondragover = e => e.preventDefault();
-        dropZone.ondrop = e => {
-        e.preventDefault();
-        input.files = e.dataTransfer.files;
-        readFile(input);
-        };
-        input.onchange = () => readFile(input);
-    });
-
-    function readFile(input) {
-        if (input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const taId = input.id === 'file1' ? 'json1' : 'json2';
-            document.getElementById(taId).value = e.target.result;
-        };
-        reader.readAsText(input.files[0]);
-        }
-    }
-
-    function processJSON() {
-        const json1 = document.getElementById('json1').value;
-        const json2 = document.getElementById('json2').value;
-        const schemaText = document.getElementById('schema').value;
-        const resultEl = document.getElementById('result');
-
-        try {
-            const obj1 = JSON.parse(json1);
-            const obj2 = JSON.parse(json2);
-
-            if (ajvAvailable) {
-                if (!schemaText.trim()) {
-                    resultEl.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900 p-4 rounded mb-4"><strong>ℹ️ Schema empty, skipping validation.</strong></div>';
-                } else {
-                    const schema = JSON.parse(schemaText);
-                    const validate1 = ajvInstance.compile(schema);
-                    if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
-                    const validate2 = ajvInstance.compile(schema);
-                    if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
-                    resultEl.innerHTML = '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files schema-valid!</strong></div>';
-                }
-            } else {
-                resultEl.innerHTML = '<div class="bg-yellow-100 dark:bg-yellow-900 p-4 rounded mb-4"><strong>⚠️ Schema validation unavailable; continuing with diff only.</strong></div>';
-            }
-
-            currentDiff = jsondiffpatch.diff(obj1, obj2);
-            resultEl.innerHTML += jsondiffpatch.formatters.html.format(currentDiff, obj1);
-        } catch (e) {
-            resultEl.innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
-        }
-    }
-
-    function formatErrors(errors) {
-        return errors.map(err => `${err.instancePath || '/'} ${err.message}`).join('; ');
-    }
-
-    function exportDiff() {
-        if (currentDiff) {
-        const blob = new Blob([JSON.stringify(currentDiff, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'json-qa-diff.json'; a.click(); URL.revokeObjectURL(url);
-        } else {
-        alert('Run diff first!');
-        }
-    }
-
-    function clearAll() {
-        ['json1', 'json2', 'schema'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('schema').value = '{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}';
-        document.getElementById('result').innerHTML = '';
-        currentDiff = null;
-        document.querySelectorAll('input[type="file"]').forEach(i => i.value = '');
-    }
-</script>
-
+  <script src="app.js"></script>
 </body>
 </html>
