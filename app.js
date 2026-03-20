@@ -261,3 +261,31 @@ function download(filename, data) {
   a.href = url; a.download = filename; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+function initDocumentationCard() {
+  const card = document.getElementById('docCard');
+  if (!card) return;
+
+  const storageKey = 'jsonQaReadmeVisited';
+  const hasVisited = localStorage.getItem(storageKey) === '1';
+  if (hasVisited) {
+    card.classList.add('hidden');
+  }
+
+  const dismissButton = document.getElementById('dismissDocCard');
+  if (dismissButton) {
+    dismissButton.addEventListener('click', () => {
+      localStorage.setItem(storageKey, '1');
+      card.classList.add('hidden');
+    });
+  }
+
+  const readmeLinks = document.querySelectorAll('[data-readme-link="true"]');
+  readmeLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      localStorage.setItem(storageKey, '1');
+    });
+  });
+}
+
+initDocumentationCard();

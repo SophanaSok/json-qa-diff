@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README - JSON QA Diff Tool</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css">
+  <style>
+    :root {
+      --page-bg: #f6f8fa;
+      --card-bg: #ffffff;
+      --border: #d0d7de;
+      --text: #24292f;
+      --muted: #57606a;
+      --link: #0969da;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f6f8fa;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .home-link:hover {
+      background: #eef1f4;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      background: #f6f8fa;
+    }
+
+    .markdown-body {
+      background: var(--card-bg);
+      padding: 24px;
+    }
+
+    .status {
+      padding: 18px;
+      border-left: 4px solid #d0d7de;
+      color: var(--muted);
+      background: #f6f8fa;
+      font-size: 14px;
+    }
+
+    .status.error {
+      border-left-color: #d1242f;
+      color: #cf222e;
+      background: #fff8f8;
+    }
+
+    .status a {
+      color: var(--link);
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 16px 10px 28px;
+      }
+
+      .markdown-body {
+        padding: 16px;
+      }
+
+      .title {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <h1 class="title">Project Documentation</h1>
+      <a class="home-link" href="index.html" aria-label="Back to app">← Back to App</a>
+    </div>
+
+    <section class="card" aria-live="polite">
+      <div class="card-header">README.md</div>
+      <article id="readmeContent" class="markdown-body">
+        <div class="status">Loading README...</div>
+      </article>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    (async function renderReadme() {
+      localStorage.setItem('jsonQaReadmeVisited', '1');
+      const container = document.getElementById('readmeContent');
+      try {
+        const res = await fetch('./README.md', { cache: 'no-cache' });
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status + ' when requesting README.md');
+        }
+
+        const markdown = await res.text();
+        if (!markdown.trim()) {
+          container.innerHTML = '<div class="status error">README.md is empty.</div>';
+          return;
+        }
+
+        container.innerHTML = marked.parse(markdown, {
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false
+        });
+      } catch (error) {
+        container.innerHTML = [
+          '<div class="status error">',
+          '<strong>Could not load README.md.</strong><br>',
+          'This page works on GitHub Pages and other HTTP servers. If you opened it with file://, run a local server first.<br><br>',
+          'Technical details: ' + (error && error.message ? error.message : String(error)),
+          '</div>'
+        ].join('');
+      }
+    })();
+  </script>
+</body>
+</html>
