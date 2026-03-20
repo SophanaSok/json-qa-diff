@@ -181,25 +181,24 @@ async function run() {
 }
 
 function dlDeduped() {
-  const merged = [...state.arr1raw, ...state.arr2raw];
+  if (!state.arr1raw || !state.arr2raw) return alert('Please run Analyze first.');
+
   const ignored = getIgnored();
-
-  function hashIgnoringBidDocs(obj) {
-    const filtered = {};
-    for (const k of Object.keys(obj).sort()) {
-      if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = obj[k];
-    }
-    return JSON.stringify(filtered);
-  }
-
+  const merged = [...state.arr1raw, ...state.arr2raw];
   const seen = new Map();
+
   for (const r of merged) {
-    seen.set(hashIgnoringBidDocs(r), r); // overwrite → file2 wins
+    const filtered = {};
+    for (const k of Object.keys(r).sort()) {
+      if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = r[k];
+    }
+    seen.set(JSON.stringify(filtered), r);
   }
+
   const deduped = [...seen.values()];
 
   let out;
-  if (!Array.isArray(state.raw1) && typeof state.raw1 === 'object') {
+  if (state.raw1 && !Array.isArray(state.raw1) && typeof state.raw1 === 'object') {
     const wrapKey = Object.keys(state.raw1)[0];
     out = { [wrapKey]: deduped };
   } else {
