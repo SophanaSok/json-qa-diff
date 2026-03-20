@@ -43,3 +43,65 @@ details pre {
   margin-top: 6px;
   color: #1e293b;
 }
+
+/* Field-level Options Fieldset Enhancements */
+fieldset {
+  border-color: #e5e7eb;
+}
+
+fieldset legend {
+  color: #374151;
+  font-weight: 600;
+}
+
+fieldset input[type="text"] {
+  transition: all 0.15s ease-in-out;
+}
+
+fieldset input[type="text"]:hover {
+  border-color: #d1d5db;
+}
+
+/* Responsive layout for narrow screens */
+@media (max-width: 768px) {
+  fieldset {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  fieldset legend {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  fieldset input[type="text"] {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+
+  /* Stack fields vertically on small screens */
+  .grid.lg\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Extra spacing for mobile to prevent overlap with virtual keyboard */
+@media (max-width: 480px) {
+  fieldset {
+    padding: 1.25rem;
+  }
+
+  fieldset legend {
+    font-size: 0.875rem;
+  }
+
+  fieldset input[type="text"] {
+    padding: 0.75rem;
+    font-size: 16px;
+  }
+
+  fieldset p {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+}

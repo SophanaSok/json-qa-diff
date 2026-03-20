@@ -49,20 +49,40 @@
           </button>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-400">
-  <div class="flex items-center gap-2">
-    <svg ...info icon...></svg>
-    <span>Ignore fields <span class="text-gray-300">(always excluded)</span></span>
-    <input type="text" id="ignoreFields" value="Created,Modified,Refreshed"
-      class="border border-gray-200 rounded px-2 py-0.5 text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-300 w-64">
-  </div>
-  <div class="flex items-center gap-2">
-    <svg ...clipboard icon...></svg>
-    <span>Dedupe by fields <span class="text-gray-300">(leave blank = all fields)</span></span>
-    <input type="text" id="dedupeFields" placeholder="e.g. DueDate,Title,BidStatus"
-      class="border border-gray-200 rounded px-2 py-0.5 text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-teal-300 w-64">
-    </div>
-  </div>
+      <fieldset class="bg-slate-50 border border-gray-200 rounded-xl p-5 space-y-4">
+        <legend class="text-sm font-semibold text-gray-700 flex items-center gap-2 px-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          Field-level Options
+        </legend>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m0 0l4 4m-4-4l-4 4M9 5a9 9 0 1118 0 9 9 0 01-18 0z"/>
+              </svg>
+              <label for="ignoreFields" class="text-sm font-semibold text-gray-700">Ignore fields</label>
+              <span class="text-xs text-gray-500 bg-white px-2 py-0.5 rounded">always excluded</span>
+            </div>
+            <input type="text" id="ignoreFields" value="Created,Modified,Refreshed"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors">
+            <p class="text-xs text-gray-500">Comma-separated field keys that are skipped during diff/dup detection.</p>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-6 4h6m2-5H7"/>
+              </svg>
+              <label for="dedupeFields" class="text-sm font-semibold text-gray-700">Dedupe by fields</label>
+              <span class="text-xs text-gray-500 bg-white px-2 py-0.5 rounded">optional</span>
+            </div>
+            <input type="text" id="dedupeFields" placeholder="e.g. DueDate,Title,BidStatus"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-colors">
+            <p class="text-xs text-gray-500">Define specific columns for deduping logic. Leave blank to use all fields.</p>
+          </div>
+        </div>
+      </fieldset>
     </div>
 
     <!-- Results -->
