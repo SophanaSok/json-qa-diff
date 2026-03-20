@@ -41,20 +41,19 @@
     <div id="result" class="p-6 border rounded-lg bg-white dark:bg-gray-800 min-h-64 overflow-auto"></div>
   </div>
   <script>
-    // Safe AJV init with fallback
-    let ajv;
+    // Safe AJV init with CDN fallback
+    let ajvAvailable = false;
+    let ajvInstance = null;
     try {
-    ajv = new Ajv({ allErrors: true, verbose: true });
+      if (typeof Ajv !== 'function') throw new Error('AJV constructor not available');
+      ajvInstance = new Ajv({ allErrors: true, verbose: true });
+      ajvAvailable = true;
     } catch (e) {
-    console.error('AJV load failed:', e);
-    document.getElementById('result').innerHTML = '<div class="bg-yellow-100 p-4 rounded text-center">Warning: Schema validation unavailable (CDN issue). Diff still works.</div>';
-    }
-
-    let ajvInstance;
-    try {
-        ajvInstance = new Ajv({allErrors: true, verbose: true});
-    } catch (e) {
-        console.error('AJV init failed:', e);
+      console.warn('AJV load/init failed:', e);
+      const resultEl = document.getElementById('result');
+      if (resultEl) {
+        resultEl.innerHTML = '<div class="bg-yellow-100 dark:bg-yellow-900 p-4 rounded text-center">⚠️ Warning: Schema validation unavailable (CDN issue). Diff still works.</div>';
+      }
     }
     let currentDiff = null;
 
@@ -91,26 +90,30 @@
         const json2 = document.getElementById('json2').value;
         const schemaText = document.getElementById('schema').value;
         const resultEl = document.getElementById('result');
+
         try {
-        let obj1 = JSON.parse(json1);
-        let obj2 = JSON.parse(json2);
-        
-        // Schema validation if available
-        if (ajvInstance && schemaText.trim()) {
-            const schema = JSON.parse(schemaText);
-            const validate1 = ajvInstance.compile(schema);
-            if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
-            const validate2 = ajvInstance.compile(schema);
-            if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
-            resultEl.innerHTML = '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files schema-valid!</strong></div>';
-        } else if (ajvInstance) {
-            resultEl.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900 p-4 rounded mb-4"><strong>ℹ️ Skipping schema (empty)—proceed to diff.</strong></div>';
-        }
-        
-        currentDiff = jsondiffpatch.diff(obj1, obj2);
-        resultEl.innerHTML += jsondiffpatch.formatters.html.format(currentDiff, obj1);
+            const obj1 = JSON.parse(json1);
+            const obj2 = JSON.parse(json2);
+
+            if (ajvAvailable) {
+                if (!schemaText.trim()) {
+                    resultEl.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900 p-4 rounded mb-4"><strong>ℹ️ Schema empty, skipping validation.</strong></div>';
+                } else {
+                    const schema = JSON.parse(schemaText);
+                    const validate1 = ajvInstance.compile(schema);
+                    if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
+                    const validate2 = ajvInstance.compile(schema);
+                    if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
+                    resultEl.innerHTML = '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files schema-valid!</strong></div>';
+                }
+            } else {
+                resultEl.innerHTML = '<div class="bg-yellow-100 dark:bg-yellow-900 p-4 rounded mb-4"><strong>⚠️ Schema validation unavailable; continuing with diff only.</strong></div>';
+            }
+
+            currentDiff = jsondiffpatch.diff(obj1, obj2);
+            resultEl.innerHTML += jsondiffpatch.formatters.html.format(currentDiff, obj1);
         } catch (e) {
-        resultEl.innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
+            resultEl.innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
         }
     }
 
