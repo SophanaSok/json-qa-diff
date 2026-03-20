@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON QA Diff Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ajv@8/dist/ajv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsondiffpatch/dist/formatters-html/index.js"></script>
+  <style>body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}</style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen p-8">
+  <div class="max-w-6xl mx-auto">
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">JSON QA Diff Tool</h1>
+      <p class="text-lg opacity-75">Validate schemas & diff JSON files client-side. By Sophana Sok</p>
+      <button onclick="toggleDark()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark Mode</button>
+    </header>
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-sm font-medium mb-2">File 1 (drag/drop or click)</label>
+        <input type="file" id="file1" accept=".json" class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400">
+        <textarea id="json1" rows="10" class="w-full mt-2 p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm" placeholder="Paste JSON here..."></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-2">File 2</label>
+        <input type="file" id="file2" accept=".json" class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400">
+        <textarea id="json2" rows="10" class="w-full mt-2 p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm" placeholder="Paste JSON here..."></textarea>
+      </div>
+    </div>
+    <div class="mb-6">
+      <label class="block text-sm font-medium mb-2">JSON Schema (edit for custom validation)</label>
+      <textarea id="schema" rows="4" class="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 font-mono text-sm">{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}</textarea>
+    </div>
+    <div class="flex gap-4 mb-6">
+      <button onclick="processJSON()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Validate & Diff</button>
+      <button onclick="exportDiff()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Export Diff</button>
+      <button onclick="clearAll()" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium">Clear</button>
+    </div>
+    <div id="result" class="p-6 border rounded-lg bg-white dark:bg-gray-800 min-h-64 overflow-auto"></div>
+  </div>
+  <script>
+    const ajv = new Ajv({allErrors: true, verbose: true});
+    let currentDiff = null;
+    function toggleDark() {
+      document.documentElement.classList.toggle('dark');
+    }
+    // Drag-drop handlers
+    ['file1','file2'].forEach(id => {
+      const input = document.getElementById(id);
+      const dropZone = input.parentElement;
+      dropZone.ondragover = e => e.preventDefault();
+      dropZone.ondrop = e => {
+        e.preventDefault();
+        input.files = e.dataTransfer.files;
+        readFile(input);
+      };
+    });
+    function readFile(input) {
+      if (input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const taId = input.id === 'file1' ? 'json1' : 'json2';
+          document.getElementById(taId).value = e.target.result;
+        };
+        reader.readAsText(input.files[0]);
+      }
+    }
+    function processJSON() {
+      const json1 = document.getElementById('json1').value;
+      const json2 = document.getElementById('json2').value;
+      const schemaText = document.getElementById('schema').value;
+      try {
+        const schema = JSON.parse(schemaText);
+        const obj1 = JSON.parse(json1);
+        const validate1 = ajv.compile(schema);
+        if (!validate1(obj1)) throw new Error('File 1 invalid: ' + formatErrors(validate1.errors));
+        const obj2 = JSON.parse(json2);
+        const validate2 = ajv.compile(schema);
+        if (!validate2(obj2)) throw new Error('File 2 invalid: ' + formatErrors(validate2.errors));
+        currentDiff = jsondiffpatch.diff(obj1, obj2);
+        document.getElementById('result').innerHTML = 
+          '<div class="bg-green-100 dark:bg-green-900 p-4 rounded mb-4"><strong>✅ Both files valid!</strong></div>' +
+          jsondiffpatch.formatters.html.format(currentDiff, obj1);
+      } catch (e) {
+        document.getElementById('result').innerHTML = `<div class="bg-red-100 dark:bg-red-900 p-4 rounded"><strong>❌ Error:</strong> ${e.message}</div>`;
+      }
+    }
+    function formatErrors(errors) {
+      return errors.map(err => `${err.instancePath} ${err.message}`).join('; ');
+    }
+    function exportDiff() {
+      if (currentDiff) {
+        const blob = new Blob([JSON.stringify(currentDiff, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'json-diff.json'; a.click();
+      }
+    }
+    function clearAll() {
+      document.getElementById('json1').value = '';
+      document.getElementById('json2').value = '';
+      document.getElementById('schema').value = '{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}';
+      document.getElementById('result').innerHTML = '';
+      currentDiff = null;
+      document.querySelectorAll('input[type="file"]').forEach(i => i.value = '');
+    }
+    // File input change handlers
+    document.getElementById('file1').onchange = () => readFile(document.getElementById('file1'));
+    document.getElementById('file2').onchange = () => readFile(document.getElementById('file2'));
+  </script>
+</body>
+</html>
