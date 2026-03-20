@@ -96,6 +96,28 @@ async function run() {
 
   state = { diffs, dups1, dups2, crossDups, uk };
 
+  function hashIgnoringBidDocs(obj) {
+  const filtered = {};
+  for (const k of Object.keys(obj).sort()) {
+    if (k !== 'BidDocumentHashes' && !ignored.includes(k)) filtered[k] = obj[k];
+  }
+  return JSON.stringify(filtered);
+  }
+
+  function dedupArray(arr) {
+    const seen = new Map();
+    for (const r of arr) {
+      const h = hashIgnoringBidDocs(r);
+      seen.set(h, r); // always overwrite → keeps latest
+    }
+    return [...seen.values()];
+  }
+
+  const deduped1 = dedupArray(arr1);
+  const deduped2 = dedupArray(arr2);
+
+  state = { diffs, dups1, dups2, crossDups, uk, deduped1, deduped2, raw1, raw2 };
+
   const added   = diffs.filter(d => d.type === 'added').length;
   const removed = diffs.filter(d => d.type === 'removed').length;
   const changed = diffs.filter(d => d.type === 'changed').length;
@@ -156,6 +178,19 @@ async function run() {
 
   document.getElementById('results').classList.remove('hidden');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function dlDeduped(which) {
+  const arr = which === 'file1' ? state.deduped1 : state.deduped2;
+  const originalWrapper = which === 'file1' ? state.raw1 : state.raw2;
+  let out;
+  if (!Array.isArray(originalWrapper) && typeof originalWrapper === 'object') {
+    const wrapKey = Object.keys(originalWrapper)[0];
+    out = { [wrapKey]: arr };
+  } else {
+    out = arr;
+  }
+  download(`deduped_${which}.json`, out);
 }
 
 function dlDiff() {

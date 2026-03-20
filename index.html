@@ -103,6 +103,31 @@
         <div id="dupTable"></div>
       </div>
 
+      <div class="bg-white rounded-xl shadow-sm border border-teal-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span class="text-lg">🧹</span> Clean Deduped Export
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">
+              Downloads a clean version of each file — removes records that are duplicates where the
+              <strong>only difference</strong> is <code>BidDocumentHashes</code>.
+              Keeps the latest occurrence. Preserves the original <code>{ "Export": [...] }</code> wrapper.
+            </p>
+          </div>
+          <div class="flex gap-2 ml-4 shrink-0">
+            <button onclick="dlDeduped('file1')"
+              class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium py-1.5 px-4 rounded-lg transition-colors">
+              ⬇ Clean File 1
+            </button>
+            <button onclick="dlDeduped('file2')"
+              class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium py-1.5 px-4 rounded-lg transition-colors">
+              ⬇ Clean File 2
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
