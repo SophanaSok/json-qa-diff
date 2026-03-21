@@ -37,23 +37,6 @@
   - Duplicate JSON files
   - Combined deduplicated merge
 
-## ⚙️ Installation / Quick Start
-
-1. Clone or download repository
-2. Open `index.html` in your browser (or deploy to GitHub Pages)
-3. In the app UI:
-   - Upload **File 1** (baseline)
-   - Upload **File 2** (new/export-to-compare)
-   - Confirm **Unique Key** (`ProjectCode` default)
-   - (Optional) Customize **Ignore Fields** (comma-separated)
-   - Click **Analyze**
-4. Inspect:
-   - **Summary** (counts, status, warnings)
-   - **Diff Results** (added/removed/changed rows)
-   - **Duplicate Records** (within- and cross-file sets)
-   - **Clean Combined Output**
-5. Download JSON reports as needed using buttons
-
 ## 📋 JSON input expectations
 
 The tool supports 3 JSON structures:
