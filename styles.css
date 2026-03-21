@@ -120,6 +120,12 @@ details pre {
   transform: translateX(-50%) translateY(0);
 }
 
+.summary-metric-card.tooltip-open .summary-metric-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Field-level Options Fieldset Enhancements */
 fieldset {
   border-color: #e5e7eb;

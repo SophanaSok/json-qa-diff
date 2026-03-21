@@ -1,4 +1,5 @@
 let state = {};
+let summaryTooltipOutsideBound = false;
 
 function unwrap(data) {
   if (Array.isArray(data)) return data;
@@ -151,7 +152,7 @@ async function run() {
   const changed = diffs.filter(d => d.type === 'changed').length;
 
   function metricCard(value, label, description, cardClass, valueClass, labelClass) {
-    return `<div class="summary-metric-card ${cardClass}" tabindex="0" aria-label="${label}: ${description}">
+    return `<div class="summary-metric-card ${cardClass}" tabindex="0" title="${description}" aria-label="${label}: ${description}">
       <div class="text-2xl font-bold ${valueClass}">${value}</div>
       <div class="summary-metric-label text-xs mt-0.5 ${labelClass}">${label}<span class="summary-metric-help" aria-hidden="true">i</span></div>
       <div class="summary-metric-tooltip" role="tooltip">${description}</div>
@@ -160,6 +161,7 @@ async function run() {
 
   document.getElementById('statsCard').innerHTML = `
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">📊 Summary</h2>
+    <p class="text-xs text-gray-400 mb-3">Hover or focus any metric to view details. On touch devices, tap a metric.</p>
     ${!schemaMatch ? '<div class="text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm mb-3">⚠️ Schema mismatch detected between files.</div>' : ''}
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3">
       ${metricCard(arr1.length, 'File 1 Records', 'Total parsed records in the baseline file.', 'bg-slate-50', 'text-slate-700', 'text-slate-500')}
@@ -172,6 +174,29 @@ async function run() {
       ${metricCard(arr1.length - deduped1.length, 'Removed (File 1)', 'Rows that would be removed when deduplicating File 1 with current settings.', 'bg-teal-50', 'text-teal-700', 'text-teal-600')}
       ${metricCard(arr2.length - deduped2.length, 'Removed (File 2)', 'Rows that would be removed when deduplicating File 2 with current settings.', 'bg-teal-50', 'text-teal-700', 'text-teal-600')}
     </div>`;
+
+  const statsCard = document.getElementById('statsCard');
+  const isHoverDevice = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  if (!isHoverDevice) {
+    const metricCards = statsCard.querySelectorAll('.summary-metric-card');
+    metricCards.forEach((card) => {
+      card.addEventListener('click', (event) => {
+        const wasOpen = card.classList.contains('tooltip-open');
+        metricCards.forEach((c) => c.classList.remove('tooltip-open'));
+        if (!wasOpen) card.classList.add('tooltip-open');
+        event.stopPropagation();
+      });
+      card.addEventListener('blur', () => card.classList.remove('tooltip-open'));
+    });
+
+    if (!summaryTooltipOutsideBound) {
+      document.addEventListener('click', (event) => {
+        if (event.target.closest('#statsCard .summary-metric-card')) return;
+        document.querySelectorAll('#statsCard .summary-metric-card.tooltip-open').forEach((c) => c.classList.remove('tooltip-open'));
+      });
+      summaryTooltipOutsideBound = true;
+    }
+  }
 
   const dtHTML = diffs.length === 0
     ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
