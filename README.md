@@ -37,6 +37,23 @@
   - Duplicate JSON files
   - Combined deduplicated merge
 
+## ⚙️ Installation / Quick Start
+
+1. Clone or download repository
+2. Open `index.html` in your browser (or deploy to GitHub Pages)
+3. In the app UI:
+   - Upload **File 1** (baseline)
+   - Upload **File 2** (new/export-to-compare)
+   - Confirm **Unique Key** (`ProjectCode` default)
+   - (Optional) Customize **Ignore Fields** (comma-separated)
+   - Click **Analyze**
+4. Inspect:
+   - **Summary** (counts, status, warnings)
+   - **Diff Results** (added/removed/changed rows)
+   - **Duplicate Records** (within- and cross-file sets)
+   - **Clean Combined Output**
+5. Download JSON reports as needed using buttons
+
 ## 📋 JSON input expectations
 
 The tool supports 3 JSON structures:
@@ -60,6 +77,85 @@ Any object entry is treated as a “record”.
 - Duplicate determination uses a deterministic hash across non-ignored fields
 - Compares records within each file and across both files
 - Cross-file duplicates help spot data propagation or export duplication
+
+## 📊 Summary dashboard breakdown
+
+The Summary dashboard is generated after clicking **Analyze**. It combines diffing and duplicate calculations into quick KPIs so you can assess data quality at a glance.
+
+### Quick reference table
+
+| Dashboard metric | What it means (short) |
+|---|---|
+| File 1 Records | Total parsed records in baseline file |
+| File 2 Records | Total parsed records in comparison file |
+| Added | Keys present only in File 2 |
+| Removed | Keys present only in File 1 |
+| Changed | Same key in both files, but field values differ |
+| Within-file Dups | Duplicate rows found inside File 1 + File 2 |
+| Cross-file Dups | Rows that match between File 1 and File 2 after ignore rules |
+| Removed (File 1) | Rows dropped if File 1 is deduplicated |
+| Removed (File 2) | Rows dropped if File 2 is deduplicated |
+
+### Metrics and meaning
+
+1. **File 1 Records**
+  - Total number of records parsed from File 1.
+  - Baseline count used for comparison.
+
+2. **File 2 Records**
+  - Total number of records parsed from File 2.
+  - Comparison count used for change detection.
+
+3. **Added**
+  - Records where the **Unique Key** exists in File 2 but not in File 1.
+  - Formula: `count(keys in file2 - keys in file1)`.
+
+4. **Removed**
+  - Records where the **Unique Key** exists in File 1 but not in File 2.
+  - Formula: `count(keys in file1 - keys in file2)`.
+
+5. **Changed**
+  - Records where the same **Unique Key** exists in both files, but at least one field value differs.
+  - Formula: `count(common keys where record1 != record2)`.
+
+6. **Within-file Dups**
+  - Duplicate row count found inside File 1 plus File 2.
+  - Uses record hashing after removing fields listed in **Ignore Fields**.
+  - This is a **row count**, not a duplicate-group count.
+
+7. **Cross-file Dups**
+  - Number of rows considered duplicates across File 1 and File 2.
+  - A match occurs when hashed record content is identical after applying **Ignore Fields**.
+
+8. **Removed (File 1)**
+  - How many records would be removed if File 1 is deduplicated with current ignore settings.
+  - Formula: `file1_count - deduped_file1_count`.
+
+9. **Removed (File 2)**
+  - How many records would be removed if File 2 is deduplicated with current ignore settings.
+  - Formula: `file2_count - deduped_file2_count`.
+
+### Schema mismatch warning
+
+- A warning appears when File 1 and File 2 do not share the same detected field set.
+- This helps identify structural changes (renamed/missing columns) that may affect diff accuracy.
+
+### How the dashboard works (processing flow)
+
+1. Parse and normalize both files into record arrays.
+2. Build key maps using **Unique Key**.
+3. Compute `Added`, `Removed`, and `Changed` from key presence and full-record comparison.
+4. Hash records (excluding ignored fields) to detect duplicates within each file.
+5. Compare duplicate hashes across files to detect cross-file duplicates.
+6. Run deduped projections for each file and compute removal counts.
+7. Render all metrics in the Summary panel.
+
+### Important interpretation notes
+
+- If **Ignore Fields** is too broad, duplicate counts may be inflated.
+- If **Unique Key** is missing or inconsistent, diff counts can be misleading.
+- Duplicate metrics and change metrics are independent; a record may be counted in both views.
+- For best results, keep key naming consistent and validate schema mismatch warnings before acting on counts.
 
 ## 💾 Outputs
 

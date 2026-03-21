@@ -150,19 +150,27 @@ async function run() {
   const removed = diffs.filter(d => d.type === 'removed').length;
   const changed = diffs.filter(d => d.type === 'changed').length;
 
+  function metricCard(value, label, description, cardClass, valueClass, labelClass) {
+    return `<div class="summary-metric-card ${cardClass}" tabindex="0" aria-label="${label}: ${description}">
+      <div class="text-2xl font-bold ${valueClass}">${value}</div>
+      <div class="summary-metric-label text-xs mt-0.5 ${labelClass}">${label}<span class="summary-metric-help" aria-hidden="true">i</span></div>
+      <div class="summary-metric-tooltip" role="tooltip">${description}</div>
+    </div>`;
+  }
+
   document.getElementById('statsCard').innerHTML = `
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">📊 Summary</h2>
     ${!schemaMatch ? '<div class="text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm mb-3">⚠️ Schema mismatch detected between files.</div>' : ''}
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3">
-      <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-slate-700">${arr1.length}</div><div class="text-xs text-slate-400 mt-0.5">File 1 Records</div></div>
-      <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-slate-700">${arr2.length}</div><div class="text-xs text-slate-400 mt-0.5">File 2 Records</div></div>
-      <div class="bg-green-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-green-700">${added}</div><div class="text-xs text-green-500 mt-0.5">Added</div></div>
-      <div class="bg-red-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-red-700">${removed}</div><div class="text-xs text-red-400 mt-0.5">Removed</div></div>
-      <div class="bg-yellow-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-yellow-700">${changed}</div><div class="text-xs text-yellow-500 mt-0.5">Changed</div></div>
-      <div class="bg-violet-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-violet-700">${dups1.length + dups2.length}</div><div class="text-xs text-violet-400 mt-0.5">Within-file Dups</div></div>
-      <div class="bg-violet-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-violet-700">${crossDups.length}</div><div class="text-xs text-violet-400 mt-0.5">Cross-file Dups</div></div>
-      <div class="bg-teal-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-teal-700">${arr1.length - deduped1.length}</div><div class="text-xs text-teal-500 mt-0.5">Removed (File 1)</div></div>
-      <div class="bg-teal-50 rounded-lg p-3 text-center"><div class="text-2xl font-bold text-teal-700">${arr2.length - deduped2.length}</div><div class="text-xs text-teal-500 mt-0.5">Removed (File 2)</div></div>
+      ${metricCard(arr1.length, 'File 1 Records', 'Total parsed records in the baseline file.', 'bg-slate-50', 'text-slate-700', 'text-slate-500')}
+      ${metricCard(arr2.length, 'File 2 Records', 'Total parsed records in the comparison file.', 'bg-slate-50', 'text-slate-700', 'text-slate-500')}
+      ${metricCard(added, 'Added', 'Unique keys present in File 2 but not in File 1.', 'bg-green-50', 'text-green-700', 'text-green-600')}
+      ${metricCard(removed, 'Removed', 'Unique keys present in File 1 but not in File 2.', 'bg-red-50', 'text-red-700', 'text-red-500')}
+      ${metricCard(changed, 'Changed', 'Records with the same unique key in both files where one or more field values differ.', 'bg-yellow-50', 'text-yellow-700', 'text-yellow-600')}
+      ${metricCard(dups1.length + dups2.length, 'Within-file Dups', 'Duplicate rows found inside File 1 and File 2 after Ignore Fields are excluded.', 'bg-violet-50', 'text-violet-700', 'text-violet-600')}
+      ${metricCard(crossDups.length, 'Cross-file Dups', 'Rows that match across both files after Ignore Fields are excluded.', 'bg-violet-50', 'text-violet-700', 'text-violet-600')}
+      ${metricCard(arr1.length - deduped1.length, 'Removed (File 1)', 'Rows that would be removed when deduplicating File 1 with current settings.', 'bg-teal-50', 'text-teal-700', 'text-teal-600')}
+      ${metricCard(arr2.length - deduped2.length, 'Removed (File 2)', 'Rows that would be removed when deduplicating File 2 with current settings.', 'bg-teal-50', 'text-teal-700', 'text-teal-600')}
     </div>`;
 
   const dtHTML = diffs.length === 0

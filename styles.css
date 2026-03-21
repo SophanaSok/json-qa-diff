@@ -44,6 +44,82 @@ details pre {
   color: #1e293b;
 }
 
+.summary-metric-card {
+  position: relative;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: help;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.summary-metric-card:hover,
+.summary-metric-card:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+.summary-metric-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.summary-metric-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.summary-metric-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  width: min(240px, calc(100vw - 32px));
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.45rem;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  text-align: left;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  z-index: 30;
+}
+
+.summary-metric-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.summary-metric-card:hover .summary-metric-tooltip,
+.summary-metric-card:focus-visible .summary-metric-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Field-level Options Fieldset Enhancements */
 fieldset {
   border-color: #e5e7eb;
