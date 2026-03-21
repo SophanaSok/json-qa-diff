@@ -1,5 +1,54 @@
 let state = {};
 let summaryTooltipOutsideBound = false;
+let staleHintBindingsInitialized = false;
+
+function setCleanExportStaleNotice(show) {
+  const staleNotice = document.getElementById('cleanExportStaleNotice');
+  if (!staleNotice) return;
+  staleNotice.classList.toggle('hidden', !show);
+}
+
+function initStaleMetricHint() {
+  if (staleHintBindingsInitialized) return;
+
+  const watchedIds = ['ignoreFields', 'dedupeFields', 'uniqueKey', 'file1', 'file2'];
+  watchedIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const eventName = el.tagName === 'INPUT' && el.type === 'file' ? 'change' : 'input';
+    el.addEventListener(eventName, () => {
+      if (state.hasAnalyzed) {
+        setCleanExportStaleNotice(true);
+      }
+    });
+  });
+
+  staleHintBindingsInitialized = true;
+}
+
+function bindTouchTooltipCards(container) {
+  const isHoverDevice = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  if (isHoverDevice || !container) return;
+
+  const metricCards = container.querySelectorAll('.summary-metric-card');
+  metricCards.forEach((card) => {
+    card.addEventListener('click', (event) => {
+      const wasOpen = card.classList.contains('tooltip-open');
+      metricCards.forEach((c) => c.classList.remove('tooltip-open'));
+      if (!wasOpen) card.classList.add('tooltip-open');
+      event.stopPropagation();
+    });
+    card.addEventListener('blur', () => card.classList.remove('tooltip-open'));
+  });
+
+  if (!summaryTooltipOutsideBound) {
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('.summary-metric-card')) return;
+      document.querySelectorAll('.summary-metric-card.tooltip-open').forEach((c) => c.classList.remove('tooltip-open'));
+    });
+    summaryTooltipOutsideBound = true;
+  }
+}
 
 function unwrap(data) {
   if (Array.isArray(data)) return data;
@@ -77,6 +126,30 @@ function coreHash(obj, ignored, dedupeFields) {
   return JSON.stringify(filtered);
 }
 
+function buildCleanExportPayload(arr1, arr2, raw1, uk, ignored, dedupeFields) {
+  const map1 = new Map(arr1.map(r => [r[uk], r]));
+  const result = [];
+
+  for (const r2 of arr2) {
+    const r1 = map1.get(r2[uk]);
+    if (!r1) {
+      result.push(r2);                                        // new record — include
+    } else if (coreHash(r1, ignored, dedupeFields) !== coreHash(r2, ignored, dedupeFields)) {
+      result.push(r2);                                        // real change — include File 2 version
+    }
+    // else: true duplicate (only Hash/URL noise differs) — skip
+  }
+
+  let out;
+  if (raw1 && !Array.isArray(raw1) && typeof raw1 === 'object') {
+    out = { [Object.keys(raw1)[0]]: result };
+  } else {
+    out = result;
+  }
+
+  return { result, out };
+}
+
 async function run() {
   const f1 = document.getElementById('file1').files[0];
   const f2 = document.getElementById('file2').files[0];
@@ -144,8 +217,27 @@ async function run() {
 
   const deduped1 = dedupArray(arr1, ignored);
   const deduped2 = dedupArray(arr2, ignored);
+  const dedupeFields = getDedupeFields();
+  const cleanExportPayload = buildCleanExportPayload(arr1, arr2, raw1, uk, ignored, dedupeFields);
+  const cleanExportCount = cleanExportPayload.result.length;
 
-  state = { diffs, dups1, dups2, crossDups, uk, deduped1, deduped2, raw1, raw2, arr1raw: arr1, arr2raw: arr2 };
+  state = {
+    diffs,
+    dups1,
+    dups2,
+    crossDups,
+    uk,
+    deduped1,
+    deduped2,
+    raw1,
+    raw2,
+    arr1raw: arr1,
+    arr2raw: arr2,
+    cleanExportCount,
+    hasAnalyzed: true
+  };
+
+  setCleanExportStaleNotice(false);
 
   const added   = diffs.filter(d => d.type === 'added').length;
   const removed = diffs.filter(d => d.type === 'removed').length;
@@ -176,26 +268,19 @@ async function run() {
     </div>`;
 
   const statsCard = document.getElementById('statsCard');
-  const isHoverDevice = window.matchMedia && window.matchMedia('(hover: hover)').matches;
-  if (!isHoverDevice) {
-    const metricCards = statsCard.querySelectorAll('.summary-metric-card');
-    metricCards.forEach((card) => {
-      card.addEventListener('click', (event) => {
-        const wasOpen = card.classList.contains('tooltip-open');
-        metricCards.forEach((c) => c.classList.remove('tooltip-open'));
-        if (!wasOpen) card.classList.add('tooltip-open');
-        event.stopPropagation();
-      });
-      card.addEventListener('blur', () => card.classList.remove('tooltip-open'));
-    });
+  bindTouchTooltipCards(statsCard);
 
-    if (!summaryTooltipOutsideBound) {
-      document.addEventListener('click', (event) => {
-        if (event.target.closest('#statsCard .summary-metric-card')) return;
-        document.querySelectorAll('#statsCard .summary-metric-card.tooltip-open').forEach((c) => c.classList.remove('tooltip-open'));
-      });
-      summaryTooltipOutsideBound = true;
-    }
+  const cleanExportMetric = document.getElementById('cleanExportMetric');
+  if (cleanExportMetric) {
+    cleanExportMetric.classList.remove('hidden');
+    const cleanMetricDescription = 'Total records in the exported changed_and_new.json file. Includes records that are new in File 2 or meaningfully changed versus File 1 after applying Ignore Fields and optional Dedupe by fields rules. Excludes duplicate/noise-only rows where differences are only document hash fields.';
+    cleanExportMetric.innerHTML = `
+      <div class="summary-metric-card bg-teal-50 inline-flex flex-col items-center px-4 py-3" tabindex="0" title="${cleanMetricDescription}" aria-label="Exported Records: ${cleanMetricDescription}">
+        <div class="text-2xl font-bold text-teal-700">${cleanExportCount}</div>
+        <div class="summary-metric-label text-xs mt-0.5 text-teal-600">Exported Records<span class="summary-metric-help" aria-hidden="true">i</span></div>
+        <div class="summary-metric-tooltip" role="tooltip">${cleanMetricDescription}</div>
+      </div>`;
+    bindTouchTooltipCards(cleanExportMetric);
   }
 
   const dtHTML = diffs.length === 0
@@ -248,28 +333,9 @@ function dlDeduped() {
 
   const ignored = getIgnored();
   const dedupeFields = getDedupeFields();
-  const uk = state.uk;
-  const map1 = new Map(state.arr1raw.map(r => [r[uk], r]));
-  const result = [];
+  const cleanExportPayload = buildCleanExportPayload(state.arr1raw, state.arr2raw, state.raw1, state.uk, ignored, dedupeFields);
 
-  for (const r2 of state.arr2raw) {
-    const r1 = map1.get(r2[uk]);
-    if (!r1) {
-      result.push(r2);                                        // new record — include
-    } else if (coreHash(r1, ignored, dedupeFields) !== coreHash(r2, ignored, dedupeFields)) {
-      result.push(r2);                                        // real change — include File 2 version
-    }
-    // else: true duplicate (only Hash/URL noise differs) — skip
-  }
-
-  let out;
-  if (state.raw1 && !Array.isArray(state.raw1) && typeof state.raw1 === 'object') {
-    out = { [Object.keys(state.raw1)[0]]: result };
-  } else {
-    out = result;
-  }
-
-  download('changed_and_new.json', out);
+  download('changed_and_new.json', cleanExportPayload.out);
 }
 
 function dlDiff() {
@@ -322,3 +388,4 @@ function initDocumentationCard() {
 }
 
 initDocumentationCard();
+initStaleMetricHint();
