@@ -8,7 +8,7 @@
 - Runs fully in the browser (zero backend)
 - Upload two JSON files and compute diff + duplicate insights
 - Supports configurable key and ignore-field settings
-- Download reports as JSON (diffs, duplicates, combined deduped output)
+- Download reports as JSON (diffs, duplicate scopes, clean changed/new export)
 
 ## 🔍 Purpose
 
@@ -30,12 +30,15 @@
   - Within File 2
   - Cross-file exact matches
 - Ignore fields support for dedupe (defaults: `Created`, `Modified`, `Refreshed`)
+- Optional **Dedupe by fields** selector for clean export matching logic
 - Summary dashboard with counts + mismatch warnings
 - Field-level change details with before/after values
+- In-app README guide (`readme.html`) with dismissible docs card
+- Stale-metric hint when settings change after analysis
 - Download options for all artifacts:
-  - Diff JSON
-  - Duplicate JSON files
-  - Combined deduplicated merge
+  - Diff JSON (`diff_records.json`)
+  - Duplicate JSON files (`duplicates_file1.json`, `duplicates_file2.json`, `duplicates_cross.json`)
+  - Clean changed/new export (`changed_and_new.json`)
 
 ## 📋 JSON input expectations
 
@@ -61,6 +64,25 @@ Any object entry is treated as a “record”.
 - Compares records within each file and across both files
 - Cross-file duplicates help spot data propagation or export duplication
 
+## 🧽 Clean changed/new export behavior
+
+- The **Download Combined & Deduped** action generates `changed_and_new.json`
+- Output includes:
+  - Records that are new in File 2 (key not found in File 1)
+  - Records that exist in both files but have meaningful differences
+- Output excludes records that are true duplicates/noise-only matches
+- Comparison for this export can be narrowed using **Dedupe by fields**
+  - If left blank, all non-ignored fields are considered
+  - If provided, only listed fields are considered
+- Document hash-only noise is filtered for this export:
+  - `BidDocumentHashes`, `AddendumDocumentHashes`, `AwardDocumentHashes` are excluded from clean-export comparison
+  - Document arrays (`BidDocuments`, `AddendumDocuments`, `AwardDocuments`) are normalized to Title-only comparisons
+
+### Wrapper preservation
+
+- If File 1 is wrapped in an object (for example `{ "Export": [...] }`), the clean export preserves File 1's top-level wrapper key in output.
+- If File 1 is a plain array, output is a plain array.
+
 ## 📊 Summary dashboard breakdown
 
 The Summary dashboard is generated after clicking **Analyze**. It combines diffing and duplicate calculations into quick KPIs so you can assess data quality at a glance.
@@ -78,6 +100,10 @@ The Summary dashboard is generated after clicking **Analyze**. It combines diffi
 | Cross-file Dups | Rows that match between File 1 and File 2 after ignore rules |
 | Removed (File 1) | Rows dropped if File 1 is deduplicated |
 | Removed (File 2) | Rows dropped if File 2 is deduplicated |
+
+Additional clean-export metric:
+
+- **Exported Records** (shown in the Clean Deduped Export card): total records currently projected for `changed_and_new.json`.
 
 ### Metrics and meaning
 
@@ -113,10 +139,12 @@ The Summary dashboard is generated after clicking **Analyze**. It combines diffi
 8. **Removed (File 1)**
   - How many records would be removed if File 1 is deduplicated with current ignore settings.
   - Formula: `file1_count - deduped_file1_count`.
+  - Note: current per-file dedupe projection excludes `BidDocumentHashes` in addition to ignore fields.
 
 9. **Removed (File 2)**
   - How many records would be removed if File 2 is deduplicated with current ignore settings.
   - Formula: `file2_count - deduped_file2_count`.
+  - Note: current per-file dedupe projection excludes `BidDocumentHashes` in addition to ignore fields.
 
 ### Schema mismatch warning
 
@@ -131,27 +159,30 @@ The Summary dashboard is generated after clicking **Analyze**. It combines diffi
 4. Hash records (excluding ignored fields) to detect duplicates within each file.
 5. Compare duplicate hashes across files to detect cross-file duplicates.
 6. Run deduped projections for each file and compute removal counts.
-7. Render all metrics in the Summary panel.
+7. Build clean changed/new export projection and count `Exported Records`.
+8. Render all metrics in the Summary panel plus the clean export card.
 
 ### Important interpretation notes
 
 - If **Ignore Fields** is too broad, duplicate counts may be inflated.
 - If **Unique Key** is missing or inconsistent, diff counts can be misleading.
 - Duplicate metrics and change metrics are independent; a record may be counted in both views.
+- If settings are edited after Analyze, rerun Analyze before trusting dashboard/export counts.
 - For best results, keep key naming consistent and validate schema mismatch warnings before acting on counts.
 
 ## 💾 Outputs
 
-- `differences.json` (added/removed/changed details)
-- `duplicates-file1.json`
-- `duplicates-file2.json`
-- `duplicates-crossfile.json`
-- `combined-deduped.json` (single merge with cross-file dedupe)
+- `diff_records.json` (added/removed/changed details)
+- `duplicates_file1.json`
+- `duplicates_file2.json`
+- `duplicates_cross.json`
+- `changed_and_new.json` (clean changed/new projection from File 2)
 
 ## 🔧 Options
 
 - Unique Key: the lookup field for linking records
 - Ignore Fields: fields excluded from dedupe hashing (useful for dates/timestamps)
+- Dedupe by fields: optional field subset used by clean changed/new export logic
 
 ## 💡 Best practices
 

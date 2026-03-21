@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>README - JSON QA Diff Tool</title>
+  <title>JSON QA Diff Tool - README Guide</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css">
   <style>
     :root {
@@ -121,14 +121,14 @@
 <body>
   <div class="page">
     <div class="topbar">
-      <h1 class="title">Project Documentation</h1>
+      <h1 class="title">JSON QA Diff Tool Documentation</h1>
       <a class="home-link" href="index.html" aria-label="Back to app">← Back to App</a>
     </div>
 
     <section class="card" aria-live="polite">
-      <div class="card-header">README.md</div>
+      <div class="card-header">README.md (source of truth for app guidance)</div>
       <article id="readmeContent" class="markdown-body">
-        <div class="status">Loading README...</div>
+        <div class="status">Loading README.md...</div>
       </article>
     </section>
   </div>
@@ -146,7 +146,7 @@
 
         const markdown = await res.text();
         if (!markdown.trim()) {
-          container.innerHTML = '<div class="status error">README.md is empty.</div>';
+          container.innerHTML = '<div class="status error">README.md is empty. Add documentation content to display the app guide here.</div>';
           return;
         }
 
@@ -160,7 +160,8 @@
         container.innerHTML = [
           '<div class="status error">',
           '<strong>Could not load README.md.</strong><br>',
-          'This page works on GitHub Pages and other HTTP servers. If you opened it with file://, run a local server first.<br><br>',
+          'This documentation page loads README.md over HTTP (for example, GitHub Pages or a local dev server). ',
+          'If opened with file://, the browser may block file loading.<br><br>',
           'Technical details: ' + (error && error.message ? error.message : String(error)),
           '</div>'
         ].join('');
