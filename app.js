@@ -5,6 +5,9 @@ const tableSortState = {
   diff: { key: 'key', direction: 'asc' },
   dup: { key: 'projectCode', direction: 'asc' }
 };
+const tableFilterState = {
+  diffType: 'all'
+};
 
 function normalizeSortValue(value) {
   if (value === null || value === undefined) return '';
@@ -38,6 +41,7 @@ function sortableHeader(tableName, columnKey, label) {
 }
 
 function getSortedDiffRows() {
+  const diffRows = (state.diffs || []).filter((d) => tableFilterState.diffType === 'all' || d.type === tableFilterState.diffType);
   const { key, direction } = tableSortState.diff;
   const accessor = (d) => {
     if (key === 'key') return normalizeSortValue(d.key);
@@ -47,7 +51,7 @@ function getSortedDiffRows() {
     if (key === 'changedFields') return Object.keys(d.changes || {}).length;
     return '';
   };
-  return sortRows(state.diffs || [], accessor, direction);
+  return sortRows(diffRows, accessor, direction);
 }
 
 function getAllDuplicateRows() {
@@ -74,12 +78,15 @@ function getSortedDuplicateRows() {
 
 function renderDiffTable() {
   const diffs = state.diffs || [];
+  const sortedFilteredDiffs = getSortedDiffRows();
   const dtHTML = diffs.length === 0
     ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
+    : sortedFilteredDiffs.length === 0
+      ? '<p class="text-sm text-slate-600 font-medium py-4">No diff records match the selected type filter.</p>'
     : `<table>
         <thead><tr>${sortableHeader('diff', 'key', 'ProjectCode')}${sortableHeader('diff', 'type', 'Type')}${sortableHeader('diff', 'title', 'Title')}${sortableHeader('diff', 'bidStatus', 'BidStatus')}${sortableHeader('diff', 'changedFields', 'Changed Fields')}</tr></thead>
         <tbody>
-          ${getSortedDiffRows().map(d => `
+          ${sortedFilteredDiffs.map(d => `
             <tr>
               <td><code>${d.key}</code></td>
               <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
@@ -128,6 +135,12 @@ function toggleTableSort(tableName, columnKey) {
 
   if (tableName === 'diff') renderDiffTable();
   if (tableName === 'dup') renderDuplicateTable();
+}
+
+function setDiffTypeFilter(value) {
+  const allowed = new Set(['all', 'added', 'removed', 'changed']);
+  tableFilterState.diffType = allowed.has(value) ? value : 'all';
+  renderDiffTable();
 }
 
 function setCleanExportStaleNotice(show) {
@@ -365,6 +378,11 @@ async function run() {
     hasAnalyzed: true
   };
 
+  const diffTypeFilter = document.getElementById('diffTypeFilter');
+  if (diffTypeFilter) {
+    setDiffTypeFilter(diffTypeFilter.value);
+  }
+
   setCleanExportStaleNotice(false);
 
   const added   = diffs.filter(d => d.type === 'added').length;
@@ -429,7 +447,7 @@ function dlDeduped() {
 }
 
 function dlDiff() {
-  const out = state.diffs.map(d => ({
+  const out = getSortedDiffRows().map(d => ({
     ProjectCode: d.key,
     type: d.type,
     changes: d.changes || null,

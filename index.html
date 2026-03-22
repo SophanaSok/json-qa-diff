@@ -152,13 +152,23 @@
           <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
             <span class="text-lg">🔀</span> Diff Records
           </h2>
-          <button onclick="dlDiff()"
-            class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Download Diff JSON
-          </button>
+          <div class="flex items-center gap-2">
+            <label for="diffTypeFilter" class="text-xs font-medium text-gray-500">Type</label>
+            <select id="diffTypeFilter" onchange="setDiffTypeFilter(this.value)"
+              class="border border-gray-300 rounded-lg bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
+              <option value="all" selected>All</option>
+              <option value="added">Added</option>
+              <option value="removed">Removed</option>
+              <option value="changed">Changed</option>
+            </select>
+            <button onclick="dlDiff()"
+              class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Download Diff JSON
+            </button>
+          </div>
         </div>
         <div id="diffTable"></div>
       </div>
