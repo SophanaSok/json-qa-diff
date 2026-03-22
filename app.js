@@ -169,6 +169,45 @@ function initResultsSideMenuHighlight() {
 
   const links = [...menu.querySelectorAll('.results-side-link[href^="#"]')];
   if (links.length === 0) return;
+  const sectionIds = links.map((link) => (link.getAttribute('href') || '').replace('#', '')).filter(Boolean);
+  const sections = sectionIds
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+
+  const resolveMostVisibleSectionId = () => {
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    let bestSectionId = '';
+    let bestVisiblePixels = -1;
+    let bestTopDistance = Number.POSITIVE_INFINITY;
+
+    sections.forEach((section) => {
+      const rect = section.getBoundingClientRect();
+      const visiblePixels = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+      const topDistance = Math.abs(rect.top);
+
+      if (visiblePixels > bestVisiblePixels || (visiblePixels === bestVisiblePixels && topDistance < bestTopDistance)) {
+        bestVisiblePixels = visiblePixels;
+        bestTopDistance = topDistance;
+        bestSectionId = section.id;
+      }
+    });
+
+    return bestSectionId;
+  };
+
+  let rafPending = false;
+  const updateActiveFromViewport = () => {
+    if (rafPending) return;
+    rafPending = true;
+
+    window.requestAnimationFrame(() => {
+      const visibleSectionId = resolveMostVisibleSectionId();
+      if (visibleSectionId) {
+        setActiveResultsSideLink(visibleSectionId);
+      }
+      rafPending = false;
+    });
+  };
 
   links.forEach((link) => {
     link.addEventListener('click', () => {
@@ -176,40 +215,12 @@ function initResultsSideMenuHighlight() {
       if (targetId) setActiveResultsSideLink(targetId);
     });
   });
-
-  if ('IntersectionObserver' in window) {
-    const sectionIds = links.map((link) => (link.getAttribute('href') || '').replace('#', '')).filter(Boolean);
-    const sections = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter(Boolean);
-
-    let visibleSectionId = sectionIds[0] || '';
-    const observer = new IntersectionObserver((entries) => {
-      let bestEntry = null;
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
-          bestEntry = entry;
-        }
-      }
-
-      if (bestEntry && bestEntry.target?.id) {
-        visibleSectionId = bestEntry.target.id;
-      }
-
-      if (visibleSectionId) {
-        setActiveResultsSideLink(visibleSectionId);
-      }
-    }, {
-      threshold: [0.25, 0.5, 0.75],
-      rootMargin: '-20% 0px -45% 0px'
-    });
-
-    sections.forEach((section) => observer.observe(section));
-  }
+  window.addEventListener('scroll', updateActiveFromViewport, { passive: true });
+  window.addEventListener('resize', updateActiveFromViewport);
 
   const firstId = (links[0].getAttribute('href') || '').replace('#', '');
   if (firstId) setActiveResultsSideLink(firstId);
+  updateActiveFromViewport();
 
   resultsMenuBindingsInitialized = true;
 }
