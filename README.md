@@ -44,7 +44,7 @@
 - In-app README guide (`readme.html`) with dismissible docs card
 - Stale-metric hint when settings change after analysis
 - Download options for all artifacts:
-  - Diff JSON (`diff_records.json`) honoring current Diff table filter + sort order and including full original records from File 1 and File 2
+  - Diff JSON (`diff_records.json`) honoring current Diff table filter + sort order, including row-level full records and grouped original-record sets that preserve source wrappers
   - Duplicate JSON files (`duplicates_file1.json`, `duplicates_file2.json`, `duplicates_cross.json`)
   - Clean changed/new export (`changed_and_new.json`)
 
@@ -180,7 +180,9 @@ Additional clean-export metric:
 
 ## 💾 Outputs
 
-- `diff_records.json` (added/removed/changed details for the **currently visible Diff set**, respecting active type filter and current sort, with full `record` payload plus `file1Record` and `file2Record` snapshots carrying original records)
+- `diff_records.json` includes:
+  - `rows`: diff rows for the **currently visible Diff set** (respects active type filter and current sort), each with full `record`, `file1Record`, and `file2Record`
+  - `originalRecords`: grouped arrays for `added`, `removed`, `changedFromFile1`, and `changedFromFile2`, preserving File 1/File 2 top-level wrapper schema when applicable
 - `duplicates_file1.json`
 - `duplicates_file2.json`
 - `duplicates_cross.json`

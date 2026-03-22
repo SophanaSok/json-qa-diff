@@ -327,6 +327,16 @@ function cloneRecord(record) {
   return JSON.parse(JSON.stringify(record));
 }
 
+function wrapRecordsBySourceSchema(raw, records) {
+  if (!raw || Array.isArray(raw) || typeof raw !== 'object') {
+    return records;
+  }
+
+  const firstKey = Object.keys(raw)[0];
+  if (!firstKey) return records;
+  return { [firstKey]: records };
+}
+
 function dedupArray(arr, ignored) {
   const seen = new Map();
   for (const r of arr) {
@@ -568,7 +578,8 @@ function dlDeduped() {
 }
 
 function dlDiff() {
-  const out = getSortedDiffRows().map(d => ({
+  const diffRows = getSortedDiffRows();
+  const outRows = diffRows.map(d => ({
     [state.uk || 'ProjectCode']: d.key,
     type: d.type,
     changes: d.changes || null,
@@ -576,6 +587,33 @@ function dlDiff() {
     file1Record: d.file1Record,
     file2Record: d.file2Record
   }));
+
+  const addedRecords = diffRows
+    .filter((d) => d.type === 'added' && d.file2Record)
+    .map((d) => cloneRecord(d.file2Record));
+  const removedRecords = diffRows
+    .filter((d) => d.type === 'removed' && d.file1Record)
+    .map((d) => cloneRecord(d.file1Record));
+  const changedFromFile1 = diffRows
+    .filter((d) => d.type === 'changed' && d.file1Record)
+    .map((d) => cloneRecord(d.file1Record));
+  const changedFromFile2 = diffRows
+    .filter((d) => d.type === 'changed' && d.file2Record)
+    .map((d) => cloneRecord(d.file2Record));
+
+  const out = {
+    uniqueKey: state.uk || 'ProjectCode',
+    appliedTypeFilter: tableFilterState.diffType,
+    totalRows: outRows.length,
+    rows: outRows,
+    originalRecords: {
+      added: wrapRecordsBySourceSchema(state.raw2, addedRecords),
+      removed: wrapRecordsBySourceSchema(state.raw1, removedRecords),
+      changedFromFile1: wrapRecordsBySourceSchema(state.raw1, changedFromFile1),
+      changedFromFile2: wrapRecordsBySourceSchema(state.raw2, changedFromFile2)
+    }
+  };
+
   download('diff_records.json', out);
 }
 
