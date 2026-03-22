@@ -17,7 +17,7 @@ const changesModalViewState = {
   collapsedSections: new Set(),
   searchMatches: [],
   activeMatchIndex: -1,
-  wrapEnabled: false,
+  wrapEnabled: true,
   fontStep: 0,
   activeLine: null
 };
