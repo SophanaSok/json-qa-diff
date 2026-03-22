@@ -1,6 +1,134 @@
 let state = {};
 let summaryTooltipOutsideBound = false;
 let staleHintBindingsInitialized = false;
+const tableSortState = {
+  diff: { key: 'key', direction: 'asc' },
+  dup: { key: 'projectCode', direction: 'asc' }
+};
+
+function normalizeSortValue(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).toLowerCase();
+}
+
+function compareValues(a, b, direction) {
+  if (a < b) return direction === 'asc' ? -1 : 1;
+  if (a > b) return direction === 'asc' ? 1 : -1;
+  return 0;
+}
+
+function sortRows(rows, accessor, direction) {
+  return [...rows]
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const cmp = compareValues(accessor(a.row), accessor(b.row), direction);
+      return cmp !== 0 ? cmp : a.index - b.index;
+    })
+    .map(({ row }) => row);
+}
+
+function sortIndicator(tableName, columnKey) {
+  const active = tableSortState[tableName];
+  if (active.key !== columnKey) return '&#8597;';
+  return active.direction === 'asc' ? '&#8593;' : '&#8595;';
+}
+
+function sortableHeader(tableName, columnKey, label) {
+  return `<th><button type="button" class="sort-header-btn" onclick="toggleTableSort('${tableName}', '${columnKey}')">${label}<span class="sort-indicator">${sortIndicator(tableName, columnKey)}</span></button></th>`;
+}
+
+function getSortedDiffRows() {
+  const { key, direction } = tableSortState.diff;
+  const accessor = (d) => {
+    if (key === 'key') return normalizeSortValue(d.key);
+    if (key === 'type') return normalizeSortValue(d.type);
+    if (key === 'title') return normalizeSortValue(d.record?.Title || '');
+    if (key === 'bidStatus') return normalizeSortValue(d.record?.BidStatus || '');
+    if (key === 'changedFields') return Object.keys(d.changes || {}).length;
+    return '';
+  };
+  return sortRows(state.diffs || [], accessor, direction);
+}
+
+function getAllDuplicateRows() {
+  return [
+    ...(state.dups1 || []).map(r => ({ ...r, _dupType: 'within-file1' })),
+    ...(state.dups2 || []).map(r => ({ ...r, _dupType: 'within-file2' })),
+    ...(state.crossDups || []).map(r => ({ ...r, _dupType: 'cross-file' }))
+  ];
+}
+
+function getSortedDuplicateRows() {
+  const rows = getAllDuplicateRows();
+  const { key, direction } = tableSortState.dup;
+  const accessor = (r) => {
+    if (key === 'projectCode') return normalizeSortValue(r[state.uk] || '');
+    if (key === 'title') return normalizeSortValue(r.Title || '');
+    if (key === 'bidStatus') return normalizeSortValue(r.BidStatus || '');
+    if (key === 'source') return normalizeSortValue(r._source || '');
+    if (key === 'dupType') return normalizeSortValue(r._dupType || '');
+    return '';
+  };
+  return sortRows(rows, accessor, direction);
+}
+
+function renderDiffTable() {
+  const diffs = state.diffs || [];
+  const dtHTML = diffs.length === 0
+    ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
+    : `<table>
+        <thead><tr>${sortableHeader('diff', 'key', 'ProjectCode')}${sortableHeader('diff', 'type', 'Type')}${sortableHeader('diff', 'title', 'Title')}${sortableHeader('diff', 'bidStatus', 'BidStatus')}${sortableHeader('diff', 'changedFields', 'Changed Fields')}</tr></thead>
+        <tbody>
+          ${getSortedDiffRows().map(d => `
+            <tr>
+              <td><code>${d.key}</code></td>
+              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
+              <td>${(d.record.Title || '').slice(0, 60)}${d.record.Title?.length > 60 ? '…' : ''}</td>
+              <td>${d.record.BidStatus || '—'}</td>
+              <td>${d.type === 'changed'
+                ? '<details><summary>' + Object.keys(d.changes).join(', ') + '</summary><pre>' + JSON.stringify(d.changes, null, 2) + '</pre></details>'
+                : '—'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+  document.getElementById('diffTable').innerHTML = dtHTML;
+}
+
+function renderDuplicateTable() {
+  const allDups = getSortedDuplicateRows();
+  const dupHTML = allDups.length === 0
+    ? '<p class="text-sm text-green-600 font-medium py-4">✅ No duplicates found.</p>'
+    : `<table>
+        <thead><tr>${sortableHeader('dup', 'projectCode', 'ProjectCode')}${sortableHeader('dup', 'title', 'Title')}${sortableHeader('dup', 'bidStatus', 'BidStatus')}${sortableHeader('dup', 'source', 'Source')}${sortableHeader('dup', 'dupType', 'Dup Type')}</tr></thead>
+        <tbody>
+          ${allDups.map(r => `
+            <tr>
+              <td><code>${r[state.uk] || '—'}</code></td>
+              <td>${(r.Title || '').slice(0, 60)}${r.Title?.length > 60 ? '…' : ''}</td>
+              <td>${r.BidStatus || '—'}</td>
+              <td>${r._source}</td>
+              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">${r._dupType}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  document.getElementById('dupTable').innerHTML = dupHTML;
+}
+
+function toggleTableSort(tableName, columnKey) {
+  const tableSort = tableSortState[tableName];
+  if (!tableSort) return;
+
+  if (tableSort.key === columnKey) {
+    tableSort.direction = tableSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    tableSort.key = columnKey;
+    tableSort.direction = 'asc';
+  }
+
+  if (tableName === 'diff') renderDiffTable();
+  if (tableName === 'dup') renderDuplicateTable();
+}
 
 function setCleanExportStaleNotice(show) {
   const staleNotice = document.getElementById('cleanExportStaleNotice');
@@ -283,46 +411,8 @@ async function run() {
     bindTouchTooltipCards(cleanExportMetric);
   }
 
-  const dtHTML = diffs.length === 0
-    ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
-    : `<table>
-        <thead><tr><th>ProjectCode</th><th>Type</th><th>Title</th><th>BidStatus</th><th>Changed Fields</th></tr></thead>
-        <tbody>
-          ${diffs.map(d => `
-            <tr>
-              <td><code>${d.key}</code></td>
-              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
-              <td>${(d.record.Title || '').slice(0, 60)}${d.record.Title?.length > 60 ? '…' : ''}</td>
-              <td>${d.record.BidStatus || '—'}</td>
-              <td>${d.type === 'changed'
-                ? '<details><summary>' + Object.keys(d.changes).join(', ') + '</summary><pre>' + JSON.stringify(d.changes, null, 2) + '</pre></details>'
-                : '—'}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
-  document.getElementById('diffTable').innerHTML = dtHTML;
-
-  const allDups = [
-    ...dups1.map(r => ({ ...r, _dupType: 'within-file1' })),
-    ...dups2.map(r => ({ ...r, _dupType: 'within-file2' })),
-    ...crossDups.map(r => ({ ...r, _dupType: 'cross-file' }))
-  ];
-  const dupHTML = allDups.length === 0
-    ? '<p class="text-sm text-green-600 font-medium py-4">✅ No duplicates found.</p>'
-    : `<table>
-        <thead><tr><th>ProjectCode</th><th>Title</th><th>BidStatus</th><th>Source</th><th>Dup Type</th></tr></thead>
-        <tbody>
-          ${allDups.map(r => `
-            <tr>
-              <td><code>${r[uk] || '—'}</code></td>
-              <td>${(r.Title || '').slice(0, 60)}${r.Title?.length > 60 ? '…' : ''}</td>
-              <td>${r.BidStatus || '—'}</td>
-              <td>${r._source}</td>
-              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">${r._dupType}</span></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
-  document.getElementById('dupTable').innerHTML = dupHTML;
+  renderDiffTable();
+  renderDuplicateTable();
 
   document.getElementById('results').classList.remove('hidden');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });

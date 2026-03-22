@@ -16,6 +16,35 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.sort-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sort-header-btn:hover {
+  color: #1d4ed8;
+}
+
+.sort-header-btn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sort-indicator {
+  font-size: 0.72rem;
+  color: #64748b;
+}
 #diffTable td,
 #dupTable td {
   padding: 9px 12px;
