@@ -994,24 +994,35 @@ function initResultsSideMenuHighlight() {
     .filter(Boolean);
 
   const resolveMostVisibleSectionId = () => {
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    let bestSectionId = '';
-    let bestVisiblePixels = -1;
-    let bestTopDistance = Number.POSITIVE_INFINITY;
+    if (sections.length === 0) return '';
 
-    sections.forEach((section) => {
+    const stickyHeader = document.querySelector('header');
+    const headerOffset = stickyHeader ? Math.max(0, stickyHeader.getBoundingClientRect().height) : 0;
+    const activationLine = headerOffset + 20;
+
+    let activeSectionId = sections[0].id;
+    for (const section of sections) {
       const rect = section.getBoundingClientRect();
-      const visiblePixels = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
-      const topDistance = Math.abs(rect.top);
+      if (rect.top <= activationLine) {
+        activeSectionId = section.id;
+      } else {
+        break;
+      }
+    }
 
-      if (visiblePixels > bestVisiblePixels || (visiblePixels === bestVisiblePixels && topDistance < bestTopDistance)) {
-        bestVisiblePixels = visiblePixels;
-        bestTopDistance = topDistance;
-        bestSectionId = section.id;
+    if (activeSectionId) return activeSectionId;
+
+    let nearestSectionId = sections[0].id;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    sections.forEach((section) => {
+      const distance = Math.abs(section.getBoundingClientRect().top - activationLine);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestSectionId = section.id;
       }
     });
 
-    return bestSectionId;
+    return nearestSectionId;
   };
 
   let rafPending = false;
