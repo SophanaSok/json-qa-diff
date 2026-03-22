@@ -236,14 +236,19 @@ details summary {
   padding: 0 0.2rem;
   font-weight: 600;
   font-family: 'Courier New', 'Courier', monospace;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .change-value-multiline {
-  display: inline-block;
-  white-space: pre;
+  display: block;
+  max-width: 100%;
+  white-space: pre-wrap;
   line-height: 1.52;
   padding: 0.25rem 0.4rem;
   border-radius: 0.35rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .json-key {
@@ -358,6 +363,7 @@ details summary {
 .changes-modal-body {
   padding: 0.8rem 1rem 1rem;
   overflow: auto;
+  overflow-x: hidden;
 }
 
 .changes-json-modal {
@@ -373,6 +379,9 @@ details summary {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.008em;
   background: #f8fafc;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 
