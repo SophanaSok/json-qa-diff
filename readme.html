@@ -4,15 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JSON QA Diff Tool - README Guide</title>
+  <script>
+    (function initThemeEarly() {
+      const key = 'jsonQaTheme';
+      const storedTheme = localStorage.getItem(key);
+      const mode = (storedTheme === 'dark' || storedTheme === 'light' || storedTheme === 'system')
+        ? storedTheme
+        : 'system';
+      const theme = mode === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : mode;
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme-mode', mode);
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    })();
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css">
   <style>
     :root {
       --page-bg: #f6f8fa;
-      --card-bg: #212121;
+      --card-bg: #ffffff;
       --border: #d0d7de;
       --text: #24292f;
-      --muted: #cccccc;
+      --muted: #57606a;
       --link: #0969da;
+      color-scheme: light;
+    }
+
+    html[data-theme='dark'] {
+      --page-bg: #0b1220;
+      --card-bg: #111827;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --link: #7dd3fc;
+      color-scheme: dark;
     }
 
     * {
@@ -40,6 +66,12 @@
       margin-bottom: 16px;
     }
 
+    .topbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .title {
       margin: 0;
       font-size: 18px;
@@ -54,15 +86,33 @@
       padding: 7px 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
-      background: #f6f8fa;
+      background: var(--page-bg);
       color: var(--text);
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
     }
 
-    .home-link:hover {
-      background: #eef1f4;
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--page-bg);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 112px;
+      justify-content: center;
+    }
+
+    .home-link:hover,
+    .theme-toggle:hover {
+      background: color-mix(in srgb, var(--page-bg) 75%, var(--text) 25%);
     }
 
     .card {
@@ -83,6 +133,52 @@
     .markdown-body {
       background: var(--card-bg);
       padding: 24px;
+      color: var(--text);
+    }
+
+    html[data-theme='dark'] .markdown-body {
+      --color-prettylights-syntax-comment: #64748b;
+      --color-prettylights-syntax-constant: #fda4af;
+      --color-prettylights-syntax-entity: #c4b5fd;
+      --color-prettylights-syntax-storage-modifier-import: #cbd5e1;
+      --color-prettylights-syntax-entity-tag: #93c5fd;
+      --color-prettylights-syntax-keyword: #f9a8d4;
+      --color-prettylights-syntax-string: #86efac;
+      --color-prettylights-syntax-variable: #fcd34d;
+      --color-prettylights-syntax-brackethighlighter-unmatched: #fda4af;
+      --color-prettylights-syntax-invalid-illegal-text: #f8fafc;
+      --color-prettylights-syntax-invalid-illegal-bg: #be123c;
+      --color-prettylights-syntax-carriage-return-text: #f8fafc;
+      --color-prettylights-syntax-carriage-return-bg: #be123c;
+      --color-prettylights-syntax-string-regexp: #67e8f9;
+      --color-prettylights-syntax-markup-list: #fcd34d;
+      --color-prettylights-syntax-markup-heading: #93c5fd;
+      --color-prettylights-syntax-markup-italic: #cbd5e1;
+      --color-prettylights-syntax-markup-bold: #f8fafc;
+      --color-prettylights-syntax-markup-deleted-text: #fecaca;
+      --color-prettylights-syntax-markup-deleted-bg: #7f1d1d;
+      --color-prettylights-syntax-markup-inserted-text: #bbf7d0;
+      --color-prettylights-syntax-markup-inserted-bg: #14532d;
+      --color-prettylights-syntax-markup-changed-text: #fde68a;
+      --color-prettylights-syntax-markup-changed-bg: #78350f;
+      --color-prettylights-syntax-markup-ignored-text: #dbeafe;
+      --color-prettylights-syntax-markup-ignored-bg: #1e3a8a;
+      --color-prettylights-syntax-meta-diff-range: #a5b4fc;
+      --color-prettylights-syntax-brackethighlighter-angle: #94a3b8;
+      --color-prettylights-syntax-sublimelinter-gutter-mark: #475569;
+      --color-prettylights-syntax-constant-other-reference-link: #67e8f9;
+      --color-fg-default: #e2e8f0;
+      --color-fg-muted: #94a3b8;
+      --color-fg-subtle: #64748b;
+      --color-canvas-default: #111827;
+      --color-canvas-subtle: #0f172a;
+      --color-border-default: #334155;
+      --color-border-muted: #1e293b;
+      --color-neutral-muted: rgba(148, 163, 184, 0.2);
+      --color-accent-fg: #7dd3fc;
+      --color-accent-emphasis: #0284c7;
+      --color-attention-subtle: rgba(250, 204, 21, 0.12);
+      --color-danger-fg: #fda4af;
     }
 
     .status {
@@ -122,7 +218,13 @@
   <div class="page">
     <div class="topbar">
       <h1 class="title">JSON QA Diff Tool Documentation</h1>
-      <a class="home-link" href="index.html" aria-label="Back to app">← Back to App</a>
+      <div class="topbar-actions">
+        <button type="button" class="theme-toggle" data-theme-toggle="true" aria-label="Switch theme" title="Switch theme">
+          <span data-theme-icon="true" aria-hidden="true">🖥️</span>
+          <span data-theme-label="true">Theme: System</span>
+        </button>
+        <a class="home-link" href="index.html" aria-label="Back to app">← Back to App</a>
+      </div>
     </div>
 
     <section class="card" aria-live="polite">
@@ -135,6 +237,74 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    const themeStorageKey = 'jsonQaTheme';
+    const themeModes = ['system', 'dark', 'light'];
+
+    function resolveThemeMode() {
+      const storedTheme = localStorage.getItem(themeStorageKey);
+      if (themeModes.includes(storedTheme)) return storedTheme;
+      if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
+      return 'system';
+    }
+
+    function resolveThemeFromMode(mode) {
+      if (mode === 'dark' || mode === 'light') return mode;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function nextThemeMode(mode) {
+      const index = themeModes.indexOf(mode);
+      if (index === -1) return 'system';
+      return themeModes[(index + 1) % themeModes.length];
+    }
+
+    function applyTheme(mode) {
+      const nextMode = themeModes.includes(mode) ? mode : 'system';
+      const nextTheme = resolveThemeFromMode(nextMode);
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      document.documentElement.setAttribute('data-theme-mode', nextMode);
+      document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+
+      const modeLabel = nextMode[0].toUpperCase() + nextMode.slice(1);
+      const modeIcon = nextMode === 'system' ? '🖥️' : (nextMode === 'dark' ? '🌙' : '☀️');
+      const nextModeLabel = nextThemeMode(nextMode);
+      document.querySelectorAll('[data-theme-toggle="true"]').forEach((button) => {
+        button.setAttribute('aria-label', `Switch theme mode. Current mode: ${modeLabel}`);
+        button.setAttribute('title', `Theme mode: ${modeLabel}. Click to switch to ${nextModeLabel}.`);
+
+        const iconEl = button.querySelector('[data-theme-icon="true"]');
+        const labelEl = button.querySelector('[data-theme-label="true"]');
+        if (iconEl) iconEl.textContent = modeIcon;
+        if (labelEl) labelEl.textContent = `Theme: ${modeLabel}`;
+      });
+    }
+
+    function setThemeMode(mode) {
+      const nextMode = themeModes.includes(mode) ? mode : 'system';
+      localStorage.setItem(themeStorageKey, nextMode);
+      applyTheme(nextMode);
+    }
+
+    function initThemeToggle() {
+      applyTheme(resolveThemeMode());
+
+      document.querySelectorAll('[data-theme-toggle="true"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const currentMode = document.documentElement.getAttribute('data-theme-mode') || resolveThemeMode();
+          setThemeMode(nextThemeMode(currentMode));
+        });
+      });
+
+      const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      if (themeMedia && typeof themeMedia.addEventListener === 'function') {
+        themeMedia.addEventListener('change', () => {
+          const currentMode = document.documentElement.getAttribute('data-theme-mode') || resolveThemeMode();
+          if (currentMode !== 'system') return;
+          applyTheme('system');
+        });
+      }
+    }
+
     function slugifyHeading(text) {
       return (text || '')
         .toLowerCase()
@@ -183,6 +353,7 @@
     }
 
     (async function renderReadme() {
+      initThemeToggle();
       localStorage.setItem('jsonQaReadmeVisited', '1');
       const container = document.getElementById('readmeContent');
       try {

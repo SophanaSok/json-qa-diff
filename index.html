@@ -3,6 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>JSON Diff & QA – Bid Records</title>
+  <script>
+    (function initThemeEarly() {
+      const key = 'jsonQaTheme';
+      const storedTheme = localStorage.getItem(key);
+      const mode = (storedTheme === 'dark' || storedTheme === 'light' || storedTheme === 'system')
+        ? storedTheme
+        : 'system';
+      const theme = mode === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : mode;
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme-mode', mode);
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -28,11 +43,19 @@
           <p class="text-xs text-gray-400">Compare bid export files · Detect changes & duplicates · Download results</p>
         </div>
       </div>
-      <a href="readme.html" data-readme-link="true"
-         class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-        <span aria-hidden="true">📘</span>
-        Read Guide
-      </a>
+      <div class="flex items-center gap-2">
+        <button type="button" data-theme-toggle="true"
+          class="theme-toggle inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+          aria-label="Switch theme" title="Switch theme">
+          <span data-theme-icon="true" aria-hidden="true">🖥️</span>
+          <span data-theme-label="true">Theme: System</span>
+        </button>
+        <a href="readme.html" data-readme-link="true"
+           class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+          <span aria-hidden="true">📘</span>
+          Read Guide
+        </a>
+      </div>
     </div>
   </header>
 

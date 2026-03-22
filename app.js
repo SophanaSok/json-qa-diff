@@ -2,6 +2,8 @@ let state = {};
 let summaryTooltipOutsideBound = false;
 let staleHintBindingsInitialized = false;
 let resultsMenuBindingsInitialized = false;
+const THEME_STORAGE_KEY = 'jsonQaTheme';
+const THEME_MODES = ['system', 'dark', 'light'];
 const tableSortState = {
   diff: { key: 'key', direction: 'asc' },
   dup: { key: 'projectCode', direction: 'asc' }
@@ -21,6 +23,79 @@ const changesModalViewState = {
   fontStep: 0,
   activeLine: null
 };
+
+function resolveThemeMode() {
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (THEME_MODES.includes(storedTheme)) return storedTheme;
+  if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
+  return 'system';
+}
+
+function resolveThemeFromMode(mode) {
+  if (mode === 'dark' || mode === 'light') return mode;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function nextThemeMode(mode) {
+  const index = THEME_MODES.indexOf(mode);
+  if (index === -1) return 'system';
+  return THEME_MODES[(index + 1) % THEME_MODES.length];
+}
+
+function applyTheme(mode) {
+  const root = document.documentElement;
+  const nextMode = THEME_MODES.includes(mode) ? mode : 'system';
+  const nextTheme = resolveThemeFromMode(nextMode);
+
+  root.setAttribute('data-theme', nextTheme);
+  root.setAttribute('data-theme-mode', nextMode);
+  root.classList.toggle('dark', nextTheme === 'dark');
+
+  const modeLabel = nextMode[0].toUpperCase() + nextMode.slice(1);
+  const modeIcon = nextMode === 'system' ? '🖥️' : (nextMode === 'dark' ? '🌙' : '☀️');
+  const nextModeLabel = nextThemeMode(nextMode);
+  const toggleButtons = document.querySelectorAll('[data-theme-toggle="true"]');
+
+  toggleButtons.forEach((button) => {
+    button.setAttribute('aria-label', `Switch theme mode. Current mode: ${modeLabel}`);
+    button.setAttribute('title', `Theme mode: ${modeLabel}. Click to switch to ${nextModeLabel}.`);
+    button.setAttribute('data-theme-current', nextTheme);
+    button.setAttribute('data-theme-mode', nextMode);
+
+    const iconEl = button.querySelector('[data-theme-icon="true"]');
+    const labelEl = button.querySelector('[data-theme-label="true"]');
+    if (iconEl) iconEl.textContent = modeIcon;
+    if (labelEl) labelEl.textContent = `Theme: ${modeLabel}`;
+  });
+}
+
+function setThemeMode(mode) {
+  const nextMode = THEME_MODES.includes(mode) ? mode : 'system';
+  localStorage.setItem(THEME_STORAGE_KEY, nextMode);
+  applyTheme(nextMode);
+}
+
+function toggleTheme() {
+  const currentMode = document.documentElement.getAttribute('data-theme-mode') || resolveThemeMode();
+  setThemeMode(nextThemeMode(currentMode));
+}
+
+function initThemeToggle() {
+  applyTheme(resolveThemeMode());
+
+  document.querySelectorAll('[data-theme-toggle="true"]').forEach((button) => {
+    button.addEventListener('click', toggleTheme);
+  });
+
+  const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+  if (themeMedia && typeof themeMedia.addEventListener === 'function') {
+    themeMedia.addEventListener('change', (event) => {
+      const currentMode = document.documentElement.getAttribute('data-theme-mode') || resolveThemeMode();
+      if (currentMode !== 'system') return;
+      applyTheme('system');
+    });
+  }
+}
 
 function normalizeSortValue(value) {
   if (value === null || value === undefined) return '';
@@ -1393,6 +1468,7 @@ function initDocumentationCard() {
   });
 }
 
+initThemeToggle();
 initDocumentationCard();
 initStaleMetricHint();
 initResultsSideMenuHighlight();
