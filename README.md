@@ -47,6 +47,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 | Area | What you can do |
 |---|---|
 | Summary | Quick snapshot of added, removed, changed, and duplicate counts |
+| Results Side Nav | Jump quickly between Summary, Diff Records, and Duplicate Records |
 | Diff Records | Filter and review record-level changes |
 | Duplicate Records | Review duplicates within a file and across files |
 | Exports | Download diff, duplicate, and clean changed/new JSON files |
@@ -99,6 +100,12 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 ### Why do I see schema mismatch warning?
 
 - The first parsed records in File 1 and File 2 have different field sets.
+
+### How does Theme mode work?
+
+- Theme cycles through `System`, `Dark`, and `Light`.
+- `System` follows your OS/browser color scheme automatically.
+- Your selected mode is saved locally and reused on both app and README pages.
 
 ### Changed JSON readability tools
 
@@ -191,7 +198,8 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Fold controls for changed-field blocks
   - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
-- Results side menu for quick jumps to Diff/Duplicate sections
+- Results side menu for quick jumps to Summary/Diff/Duplicate sections
+- Theme mode toggle with persistence (`System` / `Dark` / `Light`)
 - In-app README guide (`readme.html`) with dismissible docs card
 - Stale-metric hint when settings change after analysis
 - Export options:
@@ -387,8 +395,8 @@ Additional clean-export metric:
 
 ## Results Navigation UX
 
-- Side menu appears after Analyze with links to Diff and Duplicate sections.
-- Active link tracks most visible section while scrolling.
+- Side menu appears after Analyze with links to Summary, Diff, and Duplicate sections.
+- Active link tracks the section nearest the sticky-header reading position while scrolling.
 - Smooth anchor scrolling with reduced-motion fallback.
 
 ## Best Practices
@@ -412,6 +420,8 @@ Additional clean-export metric:
 - Added resizable changed JSON panel.
 - Added Maximize JSON modal with readability improvements.
 - Added syntax highlighting and array-of-objects readability improvements.
+- Added side-nav Summary link and improved active-section highlighting behavior.
+- Added persistent theme mode toggle (`System` / `Dark` / `Light`) across app and README.
 - Restructured README for user-first guidance + comprehensive technical reference.
 
 ## Contribute
