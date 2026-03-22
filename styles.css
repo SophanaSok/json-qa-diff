@@ -60,7 +60,9 @@ html[data-theme='dark'] {
   font-weight: 600;
   color: #334155;
   text-decoration: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transform: translateX(0);
+  box-shadow: 0 0 0 rgba(15, 23, 42, 0);
+  transition: background-color 0.22s ease, color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .results-side-link:hover,
@@ -73,6 +75,8 @@ html[data-theme='dark'] {
 .results-side-link.is-active {
   background: #0f172a;
   color: #f8fafc;
+  transform: translateX(-2px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16);
 }
 #diffTable th,
 #dupTable th {
