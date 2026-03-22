@@ -55,16 +55,12 @@ function renderChangedFieldsCell(diffRow) {
   if (diffRow.type !== 'changed') return '—';
 
   const changedFields = Object.keys(diffRow.changes || {});
-  const previewFields = changedFields.slice(0, 3)
+  const changedFieldChips = changedFields
     .map((field) => `<span class="changed-field-chip">${escapeHtml(field)}</span>`)
     .join('');
-  const remainingCount = Math.max(0, changedFields.length - 3);
-  const remainingLabel = remainingCount > 0
-    ? `<span class="changed-field-more">+${remainingCount} more</span>`
-    : '';
   const changedSummaryLabel = `${changedFields.length} field${changedFields.length === 1 ? '' : 's'} changed`;
 
-  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${previewFields}${remainingLabel}</span></summary><pre class="changes-json">${escapeHtml(JSON.stringify(diffRow.changes, null, 2))}</pre></details>`;
+  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><pre class="changes-json">${escapeHtml(JSON.stringify(diffRow.changes, null, 2))}</pre></details>`;
 }
 
 function getSortedDiffRows() {

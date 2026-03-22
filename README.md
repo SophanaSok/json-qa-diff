@@ -56,7 +56,7 @@
 - Changed Field filter in Diff Records (dynamically populated from detected changed fields)
 - Improved Changed Fields details UX in Diff Records:
   - Compact summary line shows count of changed fields
-  - Preview chips show up to 3 field names with a `+N more` indicator
+  - Chips show all changed field names for the row
   - Expanded JSON details are wrapped and scroll within a bounded panel for better readability
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
@@ -95,8 +95,7 @@ Any object entry is treated as a “record”.
 - In the **Changed Fields** column, each changed row uses an expandable details block.
 - The summary now prioritizes scannability by showing:
   - Total changed-field count
-  - A short chip list preview of field names
-  - `+N more` when additional fields exist
+  - A full chip list of all changed field names
 - Expanded JSON output now uses wrapped text and an internal scroll container to avoid layout overflow on long values.
 - This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
 
