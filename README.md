@@ -104,10 +104,19 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 
 - Expand inline changed JSON in Diff Records
 - Resize the inline JSON panel
-- Use Maximize JSON for a larger modal view
+- Use Maximize JSON for a larger code-editor style modal view
 - See File 1 (`from`) and File 2 (`to`) highlights
-- Use syntax highlighting in the modal
+- Use syntax highlighting in the modal (keys, strings, numbers, booleans/null, punctuation)
 - View array-of-object values in a scan-friendly format
+- Use line numbers and active-line highlighting for easier review
+- Search changed JSON with inline token-level match highlighting
+- Navigate results with `Prev/Next`, `Enter`, or keyboard (`n` / `Shift+n`)
+- Navigate lines with keyboard (`j` / `k`)
+- Use `Ctrl/Cmd+F` to focus search and `Esc` to close the modal
+- Toggle wrap (`Wrap: On/Off`) for long content
+- Adjust modal font size (`A-` / `A+`)
+- Copy modal JSON with one click (`Copy JSON`)
+- Fold and unfold changed-field blocks (`Collapse All` / `Expand All`)
 
 ## Troubleshooting
 
@@ -172,7 +181,14 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Source value highlighting
   - Resizable inline panel
   - Maximize JSON modal
+  - Code-editor modal with line numbers + active-line highlighting
   - Modal syntax highlighting (keys, strings, numbers, booleans/null, punctuation)
+  - Search with token-level match highlighting + result navigation
+  - Keyboard shortcuts (`j/k`, `n/Shift+n`, `Ctrl/Cmd+F`, `Esc`)
+  - Wrap toggle (`Wrap: On/Off`)
+  - Font-size controls (`A-` / `A+`)
+  - Copy JSON action
+  - Fold controls for changed-field blocks
   - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
 - Results side menu for quick jumps to Diff/Duplicate sections
@@ -257,7 +273,12 @@ Any object entry is treated as a record.
 - Summary includes changed-field count and field chips
 - Source legend and value highlights (`from` vs `to`)
 - Inline panel supports resize
-- Modal supports larger viewport and syntax highlighting
+- Modal supports larger viewport and code-editor readability tools:
+  - Line numbers + active-line highlight
+  - Search with token-level match highlighting
+  - Keyboard shortcuts (`j/k`, `n/Shift+n`, `Ctrl/Cmd+F`, `Esc`)
+  - Wrap toggle, font controls, copy action
+  - Collapsible changed-field blocks
 - Array-of-objects values render for at-a-glance scanning
 - Labels/legend communicate meaning in addition to color
 
