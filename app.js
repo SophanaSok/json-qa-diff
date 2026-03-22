@@ -419,12 +419,31 @@ async function run() {
     if (r1 && r2) {
       const changes = fieldDiff(r1, r2);
       if (Object.keys(changes).length > 0) {
-        diffs.push({ type: 'changed', key, changes, record: r2 });
+        diffs.push({
+          type: 'changed',
+          key,
+          changes,
+          record: r2,
+          file1Record: r1,
+          file2Record: r2
+        });
       }
     } else if (r1) {
-      diffs.push({ type: 'removed', key, record: r1 });
+      diffs.push({
+        type: 'removed',
+        key,
+        record: r1,
+        file1Record: r1,
+        file2Record: null
+      });
     } else {
-      diffs.push({ type: 'added', key, record: r2 });
+      diffs.push({
+        type: 'added',
+        key,
+        record: r2,
+        file1Record: null,
+        file2Record: r2
+      });
     }
   }
 
@@ -545,10 +564,11 @@ function dlDeduped() {
 
 function dlDiff() {
   const out = getSortedDiffRows().map(d => ({
-    ProjectCode: d.key,
+    [state.uk || 'ProjectCode']: d.key,
     type: d.type,
     changes: d.changes || null,
-    record: d.record
+    file1Record: d.file1Record,
+    file2Record: d.file2Record
   }));
   download('diff_records.json', out);
 }
