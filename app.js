@@ -216,7 +216,7 @@ function renderChangedFieldsCell(diffRow) {
 
   const encodedKey = encodeURIComponent(String(diffRow.key ?? ''));
 
-  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json">${buildHighlightedChangesJson(diffRow)}</pre></details>`;
+  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json changes-json-inline">${buildBeautifiedModalChangesJson(diffRow)}</pre></details>`;
 }
 
 function getSortedDiffRows() {

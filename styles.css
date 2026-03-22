@@ -384,6 +384,26 @@ details summary {
   word-break: break-word;
 }
 
+.changes-json-inline {
+  margin-top: 0.6rem;
+  width: 100%;
+  min-height: 14rem;
+  resize: vertical;
+  font-size: 0.845rem;
+  line-height: 1.68;
+  tab-size: 4;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.008em;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 
 body.modal-open {
   overflow: hidden;
