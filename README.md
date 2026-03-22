@@ -4,69 +4,124 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Processing: Local Browser](https://img.shields.io/badge/Processing-Local%20Browser-16a34a)](#privacy-and-security)
 
-**JSON QA Diff Tool** is a lightweight, browser-only utility for comparing two JSON exports, detecting record-level differences, and exposing duplicate records for QA and reconciliation use cases.
+A simple browser tool to compare two JSON exports, find what changed, catch duplicates, and download clean outputs.
+
+## Start Here (GitHub Pages Users)
+
+Open the app: https://SophanaSok.github.io/json-qa-diff/
+
+### What you can do with it
+
+- Compare an older file to a newer one in minutes
+- See what was added, removed, or changed
+- Inspect field-level changes in readable JSON
+- Find duplicates in one file or across both files
+- Download results you can share immediately
+
+### Quick workflow
+
+1. Upload File 1 (baseline) and File 2 (comparison).
+2. Confirm the Unique Key (default: `ProjectCode`).
+3. Keep or adjust Ignore Fields (default: `Created,Modified,Refreshed`).
+4. Click Analyze.
+5. Review Summary, Diff Records, and Duplicate Records.
+6. Download the artifact you need.
+
+### What you see after Analyze
+
+| Area | What you can do |
+|---|---|
+| Summary | Quick snapshot of added, removed, changed, and duplicate counts |
+| Diff Records | Filter and review record-level changes |
+| Duplicate Records | Review duplicates within a file and across files |
+| Exports | Download diff, duplicate, and clean changed/new JSON files |
+
+### Common tasks
+
+#### 1) Validate release changes
+
+- Use Diff Records to verify important business changes.
+- Use Changed Field filter to focus on specific fields.
+
+#### 2) Create a clean handoff file
+
+- Use Download Combined & Deduped to generate `changed_and_new.json`.
+- Use Dedupe by fields when you want matching based on specific fields only.
+
+#### 3) Investigate duplicate records
+
+- Use Duplicate Records and duplicate exports to inspect matches.
+- Tune Ignore Fields to reduce false positives.
+
+### Before you start
+
+- Recommended browsers: current Chrome, Edge, Firefox, Safari.
+- Everything runs locally in your browser (speed depends on your machine and file size).
+- Start with a small sample first, then run full exports.
+- Make sure the Unique Key exists in both files.
+
+## Common Questions
+
+### Why do I see fewer rows in `diff_records.json` than expected?
+
+- The export respects your current Diff filters and sort order.
+
+### Why is a record missing from `changed_and_new.json`?
+
+- That export intentionally skips duplicate or noise-only matches based on current ignore/dedupe settings.
+
+### Why are duplicate counts high?
+
+- Broad Ignore Fields can make many records appear identical.
+
+### Why do I see schema mismatch warning?
+
+- The first parsed records in File 1 and File 2 have different field sets.
+
+### Changed JSON readability tools
+
+- Expand inline changed JSON in Diff Records
+- Resize the inline JSON panel
+- Use Maximize JSON for a larger modal view
+- See File 1 (`from`) and File 2 (`to`) highlights
+- Use syntax highlighting in the modal
+- View array-of-object values in a scan-friendly format
+
+## Troubleshooting
+
+- Analyze returns unexpected zero changes:
+  - Check that the Unique Key is correct and exists in both files.
+- README page looks blank in local testing:
+  - Open over HTTP (not `file://`) so README can be fetched.
+- Metrics changed after editing options:
+  - Re-run Analyze because metrics and exports depend on the last analysis.
+- Long values in changed JSON are hard to read:
+  - Open Maximize JSON and use the wrapped modal view.
+
+---
+
+## Technical Reference
 
 ## Table of Contents
 
-- [Quick Start Guide](#-quick-start-guide)
-- [Before You Start](#-before-you-start)
-- [Purpose](#-purpose)
-- [Core Features](#-core-features)
-- [JSON input expectations](#-json-input-expectations)
-- [Minimal input examples](#-minimal-input-examples)
-- [Diffing behavior](#-diffing-behavior)
-- [Duplicate behavior](#-duplicate-behavior)
-- [Clean changed/new export behavior](#-clean-changednew-export-behavior)
-- [Summary dashboard breakdown](#-summary-dashboard-breakdown)
-- [Outputs](#-outputs)
-- [Options](#-options)
-- [Results Navigation UX](#-results-navigation-ux)
-- [Best practices](#-best-practices)
-- [FAQ](#-faq)
-- [Troubleshooting](#-troubleshooting)
-- [Privacy and Security](#-privacy-and-security)
-- [Changelog](#-changelog)
-- [Contribute](#-contribute)
-- [Glossary](#-glossary)
-- [License](#-license)
+- [Core Features](#core-features)
+- [JSON Input Expectations](#json-input-expectations)
+- [Minimal Input Examples](#minimal-input-examples)
+- [Options](#options)
+- [Diffing Behavior](#diffing-behavior)
+- [Duplicate Behavior](#duplicate-behavior)
+- [Clean Changed/New Export Behavior](#clean-changednew-export-behavior)
+- [Summary Dashboard Breakdown](#summary-dashboard-breakdown)
+- [Outputs](#outputs)
+- [Results Navigation UX](#results-navigation-ux)
+- [Best Practices](#best-practices)
+- [Privacy and Security](#privacy-and-security)
+- [Changelog](#changelog)
+- [Contribute](#contribute)
+- [Glossary](#glossary)
+- [License](#license)
 
-## ⚡ Quick Start Guide
-
-1. Open https://SophanaSok.github.io/json-qa-diff/ in your browser.
-2. Upload **File 1** (baseline) and **File 2** (comparison).
-3. Confirm or adjust:
-  - **Unique Key** (default: `ProjectCode`)
-  - **Ignore Fields** (default: `Created`, `Modified`, `Refreshed`)
-4. Click **Analyze**.
-5. Review:
-  - Summary metrics
-  - Diff Records (`Added`, `Removed`, `Changed`)
-  - Duplicate Records (within-file and cross-file)
-6. Export results as needed:
-  - `diff_records.json`
-  - `duplicates_file1.json`, `duplicates_file2.json`, `duplicates_cross.json`
-  - `changed_and_new.json`
-
-### Workflow note
-
-- Run **Analyze** before downloading artifacts.
-- If you change files or settings after analysis, run **Analyze** again to refresh metrics/export projections.
-
-## ✅ Before You Start
-
-- Recommended browser: current Chrome, Edge, Firefox, or Safari.
-- Data is processed in-memory in your browser, so very large files depend on local device RAM/CPU.
-- For best responsiveness, start with smaller exports first, then move to full datasets.
-- Ensure the configured **Unique Key** exists and is populated in both files.
-
-## 🔍 Purpose
-
-1. Reconcile exports from different systems (bid, asset, contract, inventory)
-2. Validate migration results before/after a data transfer
-3. Detect data quality issues (changed values + duplicates)
-4. Gain fast snapshot comparisons without manual scripting
-
-## ✨ Core Features
+## Core Features
 
 - File upload UI for File 1 (base) + File 2 (comparison)
 - Unique key lookup (default: `ProjectCode`)
@@ -79,45 +134,40 @@
   - Within File 2
   - Cross-file exact matches
 - Ignore fields support for dedupe (defaults: `Created`, `Modified`, `Refreshed`)
-- Optional **Dedupe by fields** selector for clean export matching logic
+- Optional Dedupe by fields selector for clean export matching logic
 - Summary dashboard with counts + mismatch warnings
 - Field-level change details with before/after values
-- Sortable columns in **Diff Records** and **Duplicate Records** tables (ascending/descending)
-- Diff type filter (`All`, `Added`, `Removed`, `Changed`) with live table updates
-- Changed Field filter in Diff Records (dynamically populated from detected changed fields)
-- Improved Changed Fields details UX in Diff Records:
-  - Compact summary line shows count of changed fields
-  - Chips show all changed field names for the row
-  - Expanded JSON details include source legend chips (File 1 `from` vs File 2 `to`)
-  - Changed values are color-highlighted by source (File 1 and File 2 use distinct colors)
-  - Expanded JSON panel is resizable so reviewers can enlarge it for long nested values
-  - Optional Maximize JSON modal opens a large viewport for easier full-record change review
-  - Modal JSON includes comprehensive syntax highlighting for keys, strings, numbers, booleans, and punctuation at all nesting levels
-  - Array-of-objects values (BidDocuments, etc.) expand with one object per line in modal, with each key/value pair on its own line for at-a-glance readability
+- Sortable columns in Diff Records and Duplicate Records tables
+- Diff type and changed-field filters with live updates
+- Changed JSON UX enhancements:
+  - Source legend chips (File 1 `from`, File 2 `to`)
+  - Source value highlighting
+  - Resizable inline panel
+  - Maximize JSON modal
+  - Modal syntax highlighting (keys, strings, numbers, booleans/null, punctuation)
+  - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
-  - Diff shows filtered vs total when a type filter is active
-  - Duplicate shows current displayed total
-- Minimal results side menu (shown after Analyze) for quick jumps to Diff/Duplicate sections
-  - Active link highlight tracks the most visible section while scrolling
-  - Smooth in-page scrolling for section navigation
+- Results side menu for quick jumps to Diff/Duplicate sections
 - In-app README guide (`readme.html`) with dismissible docs card
 - Stale-metric hint when settings change after analysis
-- Download options for all artifacts:
-  - Diff JSON (`diff_records.json`) honoring current Diff table filter + sort order, including row-level full records and grouped original-record sets that preserve source wrappers
-  - Duplicate JSON files (`duplicates_file1.json`, `duplicates_file2.json`, `duplicates_cross.json`)
-  - Clean changed/new export (`changed_and_new.json`)
+- Export options:
+  - `diff_records.json`
+  - `duplicates_file1.json`
+  - `duplicates_file2.json`
+  - `duplicates_cross.json`
+  - `changed_and_new.json`
 
-## 📋 JSON input expectations
+## JSON Input Expectations
 
-The tool supports 3 JSON structures:
+Supported structures:
 
 - Plain array of objects
 - Object with `Export` key array
 - Object where the first key is an array
 
-Any object entry is treated as a “record”.
+Any object entry is treated as a record.
 
-## 🧪 Minimal input examples
+## Minimal Input Examples
 
 ### 1) Plain array
 
@@ -148,254 +198,191 @@ Any object entry is treated as a “record”.
 }
 ```
 
-## 🧮 Diffing behavior
+## Options
+
+- Unique Key: lookup field used to align records between files
+- Ignore Fields: excluded from duplicate hashing and clean-export comparison
+- Dedupe by fields: optional field subset for clean changed/new logic
+- Diff Type filter: `All`, `Added`, `Removed`, `Changed`
+- Changed Field filter: show only changed rows containing selected field
+
+## Diffing Behavior
 
 - Keys matched by Unique Key
 - `Added`: key missing in File 1
 - `Removed`: key missing in File 2
-- `Changed`: key exists in both, non-identical record data
-- Field-level changes are shown as value deltas for easy review, with source-based highlighting for `from` and `to` values
-- `Changed` comparisons are full-record comparisons (not reduced by **Ignore Fields**)
+- `Changed`: key exists in both and record content differs
+- Field-level changes are shown as `from`/`to` deltas
+- `Changed` comparisons are full-record comparisons (not reduced by Ignore Fields)
 
 ### Edge-case semantics
 
-- Missing unique keys: records with empty/missing keys can collide and produce misleading results.
-- Duplicate unique keys in the same file: last value in map-like processing may dominate row-level comparisons.
-- Field missing on one side: treated as a change for that field.
-- Type changes (for example, `"10"` vs `10`): treated as changed.
-- `null` vs missing/undefined: treated as changed.
+- Missing unique keys can collide and produce misleading results.
+- Duplicate unique keys in one file can cause last-write-wins behavior in key maps.
+- Field present on one side only is treated as changed.
+- Type changes (for example `"10"` vs `10`) are treated as changed.
+- `null` vs missing/undefined is treated as changed.
 
 ### Changed field details readability
 
-- In the **Changed Fields** column, each changed row uses an expandable details block.
-- The summary now prioritizes scannability by showing:
-  - Total changed-field count
-  - A full chip list of all changed field names
-- Expanded details include a legend for source values:
-  - File 1 value (`from`)
-  - File 2 value (`to`)
-- The `from` and `to` values are visually highlighted using different colors to speed up side-by-side review.
-- The JSON panel supports drag-to-resize, making long values easier to inspect without leaving the table context.
-- A Maximize JSON action opens the same highlighted payload in a larger modal viewport with comprehensive syntax highlighting:
-  - Keys in blue
-  - String values in dark blue
-  - Numbers in medium blue
-  - Booleans and null in red
-  - Structural punctuation in dark gray
-- Array-of-objects values (such as document arrays) expand with:
-  - One object per line in the array
-  - Each key/value pair within an object on its own line with consistent indentation
-  - Full syntax highlighting applied to all nested elements
-- This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
-- Accessibility note: labels and legend text communicate meaning in addition to color.
+- Expandable changed details in table rows
+- Summary includes changed-field count and field chips
+- Source legend and value highlights (`from` vs `to`)
+- Inline panel supports resize
+- Modal supports larger viewport and syntax highlighting
+- Array-of-objects values render for at-a-glance scanning
+- Labels/legend communicate meaning in addition to color
 
-## 🧹 Duplicate behavior
+## Duplicate Behavior
 
-- Duplicate determination uses a deterministic hash across non-ignored fields
-- Compares records within each file and across both files
-- Cross-file duplicates help spot data propagation or export duplication
+- Deterministic hash across non-ignored fields
+- Duplicate scopes:
+  - Within File 1
+  - Within File 2
+  - Cross-file
+- Cross-file duplicates help identify propagation/export duplication
 
-## 🧽 Clean changed/new export behavior
+## Clean Changed/New Export Behavior
 
-- The **Download Combined & Deduped** action generates `changed_and_new.json`
-- Output includes:
-  - Records that are new in File 2 (key not found in File 1)
-  - Records that exist in both files but have meaningful differences
-- Output excludes records that are true duplicates/noise-only matches
-- Comparison for this export can be narrowed using **Dedupe by fields**
-  - If left blank, all non-ignored fields are considered
-  - If provided, only listed fields are considered
-- Document hash-only noise is filtered for this export:
-  - `BidDocumentHashes`, `AddendumDocumentHashes`, `AwardDocumentHashes` are excluded from clean-export comparison
-  - Document arrays (`BidDocuments`, `AddendumDocuments`, `AwardDocuments`) are normalized to Title-only comparisons
+- Download Combined & Deduped generates `changed_and_new.json`
+- Includes:
+  - Keys new in File 2
+  - Records changed meaningfully between File 1 and File 2
+- Excludes true duplicate/noise-only matches
+- Dedupe by fields can narrow comparison scope
+- Hash-only noise excluded for clean export comparison:
+  - `BidDocumentHashes`, `AddendumDocumentHashes`, `AwardDocumentHashes`
+- Document arrays normalized to Title-only comparisons for clean export logic:
+  - `BidDocuments`, `AddendumDocuments`, `AwardDocuments`
 
 ### Wrapper preservation
 
-- If File 1 is wrapped in an object (for example `{ "Export": [...] }`), the clean export preserves File 1's top-level wrapper key in output.
+- If File 1 is wrapped (for example `{ "Export": [...] }`), output preserves File 1 wrapper key.
 - If File 1 is a plain array, output is a plain array.
 
-## 📊 Summary dashboard breakdown
+## Summary Dashboard Breakdown
 
-The Summary dashboard is generated after clicking **Analyze**. It combines diffing and duplicate calculations into quick KPIs so you can assess data quality at a glance.
+Summary is generated after Analyze and combines diffing + duplicate metrics.
 
 ### Quick reference table
 
-| Dashboard metric | What it means (short) |
+| Dashboard metric | Meaning |
 |---|---|
 | File 1 Records | Total parsed records in baseline file |
 | File 2 Records | Total parsed records in comparison file |
 | Added | Keys present only in File 2 |
 | Removed | Keys present only in File 1 |
-| Changed | Same key in both files, but field values differ |
+| Changed | Same key in both files with field deltas |
 | Within-file Dups | Duplicate rows found inside File 1 + File 2 |
-| Cross-file Dups | Rows that match between File 1 and File 2 after ignore rules |
+| Cross-file Dups | Rows matching across File 1 and File 2 after ignore rules |
 | Removed (File 1) | Rows dropped if File 1 is deduplicated |
 | Removed (File 2) | Rows dropped if File 2 is deduplicated |
 
 Additional clean-export metric:
 
-- **Exported Records** (shown in the Clean Deduped Export card): total records currently projected for `changed_and_new.json`.
+- Exported Records (shown in Clean Deduped Export card): projected count for `changed_and_new.json`
 
 ### Metrics and meaning
 
-1. **File 1 Records**
-  - Total number of records parsed from File 1.
-  - Baseline count used for comparison.
-
-2. **File 2 Records**
-  - Total number of records parsed from File 2.
-  - Comparison count used for change detection.
-
-3. **Added**
-  - Records where the **Unique Key** exists in File 2 but not in File 1.
-  - Formula: `count(keys in file2 - keys in file1)`.
-
-4. **Removed**
-  - Records where the **Unique Key** exists in File 1 but not in File 2.
-  - Formula: `count(keys in file1 - keys in file2)`.
-
-5. **Changed**
-  - Records where the same **Unique Key** exists in both files, but at least one field value differs.
-  - Formula: `count(common keys where record1 != record2)`.
-
-6. **Within-file Dups**
-  - Duplicate row count found inside File 1 plus File 2.
-  - Uses record hashing after removing fields listed in **Ignore Fields**.
-  - This is a **row count**, not a duplicate-group count.
-
-7. **Cross-file Dups**
-  - Number of rows considered duplicates across File 1 and File 2.
-  - A match occurs when hashed record content is identical after applying **Ignore Fields**.
-
-8. **Removed (File 1)**
-  - How many records would be removed if File 1 is deduplicated with current ignore settings.
-  - Formula: `file1_count - deduped_file1_count`.
-  - Note: current per-file dedupe projection excludes `BidDocumentHashes` in addition to ignore fields.
-
-9. **Removed (File 2)**
-  - How many records would be removed if File 2 is deduplicated with current ignore settings.
-  - Formula: `file2_count - deduped_file2_count`.
-  - Note: current per-file dedupe projection excludes `BidDocumentHashes` in addition to ignore fields.
+1. File 1 Records
+  - Total records parsed from File 1.
+2. File 2 Records
+  - Total records parsed from File 2.
+3. Added
+  - Count of keys present in File 2 but not File 1.
+4. Removed
+  - Count of keys present in File 1 but not File 2.
+5. Changed
+  - Count of keys present in both where record values differ.
+6. Within-file Dups
+  - Duplicate row count inside File 1 plus File 2 after Ignore Fields.
+7. Cross-file Dups
+  - Duplicate row count across files after Ignore Fields.
+8. Removed (File 1)
+  - `file1_count - deduped_file1_count`.
+9. Removed (File 2)
+  - `file2_count - deduped_file2_count`.
 
 ### Schema mismatch warning
 
-- A warning appears when the first parsed record in File 1 and File 2 do not share the same detected field set.
-- This helps identify structural changes (renamed/missing columns) that may affect diff accuracy.
+- Triggered when first parsed records have different detected field sets.
+- Helps identify renamed/missing/added columns that may affect interpretation.
 
-### How the dashboard works (processing flow)
+### Processing flow
 
-1. Parse and normalize both files into record arrays.
-2. Build key maps using **Unique Key**.
-3. Compute `Added`, `Removed`, and `Changed` from key presence and full-record comparison.
-4. Hash records (excluding ignored fields) to detect duplicates within each file.
-5. Compare duplicate hashes across files to detect cross-file duplicates.
-6. Run deduped projections for each file and compute removal counts.
-7. Build clean changed/new export projection and count `Exported Records`.
-8. Render all metrics in the Summary panel plus the clean export card.
+1. Parse and normalize both files.
+2. Build key maps from Unique Key.
+3. Compute Added/Removed/Changed.
+4. Hash records (excluding ignored fields) for duplicate detection.
+5. Compare hashes across files for cross-file duplicates.
+6. Compute per-file dedupe projection counts.
+7. Build clean changed/new export projection.
+8. Render metrics + clean export card.
 
-### Important interpretation notes
+### Interpretation notes
 
-- If **Ignore Fields** is too broad, duplicate counts may be inflated.
-- If **Unique Key** is missing or inconsistent, diff counts can be misleading.
-- Duplicate metrics and change metrics are independent; a record may be counted in both views.
-- If settings are edited after Analyze, rerun Analyze before trusting dashboard/export counts.
-- For best results, keep key naming consistent and validate schema mismatch warnings before acting on counts.
+- Over-broad Ignore Fields can inflate duplicate counts.
+- Weak/missing Unique Key values can skew diff accuracy.
+- Duplicate and change counts are independent dimensions.
+- Re-run Analyze after setting changes before trusting exports.
 
-## 💾 Outputs
+## Outputs
 
-- `diff_records.json` includes:
-  - `rows`: diff rows for the **currently visible Diff set** (respects active type filter, changed-field filter, and current sort), each with full `record`, `file1Record`, and `file2Record`
-  - `originalRecords`: grouped arrays for `added`, `removed`, `changedFromFile1`, and `changedFromFile2`, preserving File 1/File 2 top-level wrapper schema when applicable
+- `diff_records.json`
+  - `rows`: currently visible diff rows (respects type filter, changed-field filter, and sort)
+  - `originalRecords`: grouped `added`, `removed`, `changedFromFile1`, `changedFromFile2` preserving source wrapper schemas
 - `duplicates_file1.json`
 - `duplicates_file2.json`
 - `duplicates_cross.json`
-- `changed_and_new.json` (clean changed/new projection from File 2)
+- `changed_and_new.json`
 
-## 🔧 Options
+## Results Navigation UX
 
-- Unique Key: the lookup field for linking records
-- Ignore Fields: fields excluded from duplicate hashing and clean-export comparison (useful for dates/timestamps)
-- Dedupe by fields: optional field subset used by clean changed/new export logic
-- Diff Type filter: limits Diff table to `Added`, `Removed`, or `Changed` records
-- Changed Field filter: limits Diff table to changed rows containing a selected changed field
+- Side menu appears after Analyze with links to Diff and Duplicate sections.
+- Active link tracks most visible section while scrolling.
+- Smooth anchor scrolling with reduced-motion fallback.
 
-## 🧭 Results Navigation UX
+## Best Practices
 
-- After **Analyze**, a minimalist side menu appears with quick links to:
-  - Diff Records
-  - Duplicate Records
-- The side menu highlights the currently dominant visible section during scroll (up or down).
-- Anchor navigation uses smooth scrolling (with reduced-motion accessibility fallback).
+- Ensure unique key exists for every record in both files.
+- Keep field naming consistent across exports.
+- Start with narrow Ignore Fields and expand carefully.
+- Validate cross-file duplicates before downstream automated actions.
 
-## 💡 Best practices
+## Privacy and Security
 
-- Ensure both files include the unique key in every record
-- Use consistent export field names
-- Start with a narrow set of ignored fields, then expand as needed
-- Verify cross-file duplicate findings before applying automated dedupe in downstream workflows
+- Processing is local in browser; no server-side data processing.
+- `readme.html` uses CDN-hosted `github-markdown-css` and `marked` for documentation rendering.
 
-## ❓ FAQ
-
-### Why are duplicate counts higher than expected?
-
-- The duplicate hash excludes fields listed in **Ignore Fields**, so broad ignore lists can increase matches.
-
-### Why is a record missing from `changed_and_new.json`?
-
-- The clean export excludes true duplicate/noise-only records based on current ignore/dedupe settings.
-
-### Why did `diff_records.json` not include all rows?
-
-- Diff export respects active Diff table filters and current sort order.
-
-### Why do I see a schema mismatch warning?
-
-- File 1 and File 2 first-record field sets differ, which may indicate renamed/added/removed columns.
-
-## 🛠️ Troubleshooting
-
-- Analyze returns unexpected zero changes:
-  - Confirm **Unique Key** is correct and present in both files.
-- README guide page looks blank locally:
-  - Open via an HTTP server (not `file://`) so README can be fetched.
-- Counts changed after editing options:
-  - Re-run **Analyze**; metrics and exports are tied to latest analyzed state.
-- Changed values are hard to inspect:
-  - Expand row details and drag-resize the changed JSON panel.
-
-## 🛡️ Privacy and Security
-
-Data is processed locally in your browser. No network transfer or server side processing.
-
-Documentation rendering in `readme.html` uses CDN-hosted assets (`github-markdown-css` and `marked`) for presentation only.
-
-## 🗓️ Changelog
+## Changelog
 
 ### 2026-03-22
 
-- Added changed-value source highlighting for File 1 (`from`) and File 2 (`to`).
-- Added legend chips to changed-value details.
-- Made changed JSON details panel resizable.
-- Updated README to include examples, edge-case semantics, FAQ, and troubleshooting.
+- Added changed-value source highlighting (`from` / `to`).
+- Added legend chips for changed details.
+- Added resizable changed JSON panel.
+- Added Maximize JSON modal with readability improvements.
+- Added syntax highlighting and array-of-objects readability improvements.
+- Restructured README for user-first guidance + comprehensive technical reference.
 
-## 🤝 Contribute
+## Contribute
 
-1. Fork and clone the repository.
-2. Run a local static server in the project folder, for example:
+1. Fork and clone repository.
+2. Start local static server in project directory:
    - `python3 -m http.server 8080`
-3. Open `http://localhost:8080` and validate with sample JSON files.
-4. Make changes with clear notes in README for behavior updates.
-5. Open a PR with reproduction steps and before/after behavior summary.
+3. Open `http://localhost:8080` and test with sample JSON.
+4. Update behavior docs in README for feature changes.
+5. Open PR with repro steps and before/after summary.
 
-## 📚 Glossary
+## Glossary
 
-- Record: one object entry from the parsed input array.
-- Unique Key: field used to align records between File 1 and File 2.
+- Record: one object entry from parsed array.
+- Unique Key: field used to align records across files.
 - Changed row: same key in both files with one or more field deltas.
-- Duplicate row: record considered equal under duplicate hash rules.
-- Cross-file duplicate: duplicate match found across File 1 and File 2.
-- Clean export: `changed_and_new.json`, containing meaningful new/changed rows.
+- Duplicate row: record treated as equivalent under duplicate hashing.
+- Cross-file duplicate: duplicate match across File 1 and File 2.
+- Clean export: `changed_and_new.json` with meaningful new/changed rows.
 
-## 📄 License
+## License
 
 MIT
