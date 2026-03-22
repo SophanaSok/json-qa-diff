@@ -1,6 +1,7 @@
 let state = {};
 let summaryTooltipOutsideBound = false;
 let staleHintBindingsInitialized = false;
+let resultsMenuBindingsInitialized = false;
 const tableSortState = {
   diff: { key: 'key', direction: 'asc' },
   dup: { key: 'projectCode', direction: 'asc' }
@@ -141,6 +142,76 @@ function setDiffTypeFilter(value) {
   const allowed = new Set(['all', 'added', 'removed', 'changed']);
   tableFilterState.diffType = allowed.has(value) ? value : 'all';
   renderDiffTable();
+}
+
+function setActiveResultsSideLink(sectionId) {
+  const menu = document.getElementById('resultsSideMenu');
+  if (!menu) return;
+
+  const links = menu.querySelectorAll('.results-side-link');
+  links.forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const matches = href === `#${sectionId}`;
+    link.classList.toggle('is-active', matches);
+    if (matches) {
+      link.setAttribute('aria-current', 'true');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+}
+
+function initResultsSideMenuHighlight() {
+  if (resultsMenuBindingsInitialized) return;
+
+  const menu = document.getElementById('resultsSideMenu');
+  if (!menu) return;
+
+  const links = [...menu.querySelectorAll('.results-side-link[href^="#"]')];
+  if (links.length === 0) return;
+
+  links.forEach((link) => {
+    link.addEventListener('click', () => {
+      const targetId = (link.getAttribute('href') || '').replace('#', '');
+      if (targetId) setActiveResultsSideLink(targetId);
+    });
+  });
+
+  if ('IntersectionObserver' in window) {
+    const sectionIds = links.map((link) => (link.getAttribute('href') || '').replace('#', '')).filter(Boolean);
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    let visibleSectionId = sectionIds[0] || '';
+    const observer = new IntersectionObserver((entries) => {
+      let bestEntry = null;
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
+          bestEntry = entry;
+        }
+      }
+
+      if (bestEntry && bestEntry.target?.id) {
+        visibleSectionId = bestEntry.target.id;
+      }
+
+      if (visibleSectionId) {
+        setActiveResultsSideLink(visibleSectionId);
+      }
+    }, {
+      threshold: [0.25, 0.5, 0.75],
+      rootMargin: '-20% 0px -45% 0px'
+    });
+
+    sections.forEach((section) => observer.observe(section));
+  }
+
+  const firstId = (links[0].getAttribute('href') || '').replace('#', '');
+  if (firstId) setActiveResultsSideLink(firstId);
+
+  resultsMenuBindingsInitialized = true;
 }
 
 function setCleanExportStaleNotice(show) {
@@ -498,3 +569,4 @@ function initDocumentationCard() {
 
 initDocumentationCard();
 initStaleMetricHint();
+initResultsSideMenuHighlight();

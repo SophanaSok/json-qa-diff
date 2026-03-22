@@ -41,6 +41,11 @@
   color: #0f172a;
   outline: none;
 }
+
+.results-side-link.is-active {
+  background: #0f172a;
+  color: #f8fafc;
+}
 #diffTable th,
 #dupTable th {
   background: #f8faff;
