@@ -996,6 +996,17 @@ function initResultsSideMenuHighlight() {
   const resolveMostVisibleSectionId = () => {
     if (sections.length === 0) return '';
 
+    const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const documentHeight = Math.max(
+      document.body?.scrollHeight || 0,
+      document.documentElement?.scrollHeight || 0
+    );
+    const isNearPageBottom = scrollTop + viewportHeight >= documentHeight - 8;
+    if (isNearPageBottom) {
+      return sections[sections.length - 1].id;
+    }
+
     const stickyHeader = document.querySelector('header');
     const headerOffset = stickyHeader ? Math.max(0, stickyHeader.getBoundingClientRect().height) : 0;
     const activationLine = headerOffset + 20;
