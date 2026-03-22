@@ -5,6 +5,43 @@
 
 **JSON QA Diff Tool** is a lightweight, browser-only utility for comparing two JSON exports, detecting record-level differences, and exposing duplicate records for QA and reconciliation use cases.
 
+## ⚡ Quick Start Guide
+
+1. Open https://SophanaSok.github.io/json-qa-diff/ in your browser.
+2. Upload **File 1** (baseline) and **File 2** (comparison).
+3. Confirm or adjust:
+  - **Unique Key** (default: `ProjectCode`)
+  - **Ignore Fields** (default: `Created`, `Modified`, `Refreshed`)
+4. Click **Analyze**.
+5. Review:
+  - Summary metrics
+  - Diff Records (`Added`, `Removed`, `Changed`)
+  - Duplicate Records (within-file and cross-file)
+6. Export results as needed:
+  - `diff_records.json`
+  - `duplicates_file1.json`, `duplicates_file2.json`, `duplicates_cross.json`
+  - `changed_and_new.json`
+
+### Workflow note
+
+- Run **Analyze** before downloading artifacts.
+- If you change files or settings after analysis, run **Analyze** again to refresh metrics/export projections.
+
+## 📚 In-Depth Guide
+
+Use these sections for detailed behavior, formulas, and interpretation guidance:
+
+- [JSON input expectations](#-json-input-expectations)
+- [Diffing behavior](#-diffing-behavior)
+- [Duplicate behavior](#-duplicate-behavior)
+- [Clean changed/new export behavior](#-clean-changednew-export-behavior)
+- [Summary dashboard breakdown](#-summary-dashboard-breakdown)
+- [Outputs](#-outputs)
+- [Options](#-options)
+- [Results Navigation UX](#-results-navigation-ux)
+- [Best practices](#-best-practices)
+- [Privacy](#-privacy)
+
 - Runs fully in the browser (zero backend)
 - Upload two JSON files and compute diff + duplicate insights
 - Supports configurable key and ignore-field settings
@@ -65,6 +102,7 @@ Any object entry is treated as a “record”.
 - `Removed`: key missing in File 2
 - `Changed`: key exists in both, non-identical record data
 - Field-level changes are shown as value deltas for easy review
+- `Changed` comparisons are full-record comparisons (not reduced by **Ignore Fields**)
 
 ## 🧹 Duplicate behavior
 
@@ -156,7 +194,7 @@ Additional clean-export metric:
 
 ### Schema mismatch warning
 
-- A warning appears when File 1 and File 2 do not share the same detected field set.
+- A warning appears when the first parsed record in File 1 and File 2 do not share the same detected field set.
 - This helps identify structural changes (renamed/missing columns) that may affect diff accuracy.
 
 ### How the dashboard works (processing flow)
@@ -191,7 +229,7 @@ Additional clean-export metric:
 ## 🔧 Options
 
 - Unique Key: the lookup field for linking records
-- Ignore Fields: fields excluded from dedupe hashing (useful for dates/timestamps)
+- Ignore Fields: fields excluded from duplicate hashing and clean-export comparison (useful for dates/timestamps)
 - Dedupe by fields: optional field subset used by clean changed/new export logic
 - Diff Type filter: limits Diff table to `Added`, `Removed`, or `Changed` records
 
