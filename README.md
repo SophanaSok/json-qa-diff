@@ -31,16 +31,16 @@
 
 Use these sections for detailed behavior, formulas, and interpretation guidance:
 
-- [JSON input expectations](#-json-input-expectations)
-- [Diffing behavior](#-diffing-behavior)
-- [Duplicate behavior](#-duplicate-behavior)
-- [Clean changed/new export behavior](#-clean-changednew-export-behavior)
-- [Summary dashboard breakdown](#-summary-dashboard-breakdown)
-- [Outputs](#-outputs)
-- [Options](#-options)
-- [Results Navigation UX](#-results-navigation-ux)
-- [Best practices](#-best-practices)
-- [Privacy](#-privacy)
+- [JSON input expectations](#json-input-expectations)
+- [Diffing behavior](#diffing-behavior)
+- [Duplicate behavior](#duplicate-behavior)
+- [Clean changed/new export behavior](#clean-changednew-export-behavior)
+- [Summary dashboard breakdown](#summary-dashboard-breakdown)
+- [Outputs](#outputs)
+- [Options](#options)
+- [Results Navigation UX](#results-navigation-ux)
+- [Best practices](#best-practices)
+- [Privacy](#privacy)
 
 - Runs fully in the browser (zero backend)
 - Upload two JSON files and compute diff + duplicate insights
