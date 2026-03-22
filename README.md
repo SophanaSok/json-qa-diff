@@ -52,6 +52,7 @@
 - Field-level change details with before/after values
 - Sortable columns in **Diff Records** and **Duplicate Records** tables (ascending/descending)
 - Diff type filter (`All`, `Added`, `Removed`, `Changed`) with live table updates
+- Changed Field filter in Diff Records (dynamically populated from detected changed fields)
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
   - Duplicate shows current displayed total
@@ -199,7 +200,7 @@ Additional clean-export metric:
 ## 💾 Outputs
 
 - `diff_records.json` includes:
-  - `rows`: diff rows for the **currently visible Diff set** (respects active type filter and current sort), each with full `record`, `file1Record`, and `file2Record`
+  - `rows`: diff rows for the **currently visible Diff set** (respects active type filter, changed-field filter, and current sort), each with full `record`, `file1Record`, and `file2Record`
   - `originalRecords`: grouped arrays for `added`, `removed`, `changedFromFile1`, and `changedFromFile2`, preserving File 1/File 2 top-level wrapper schema when applicable
 - `duplicates_file1.json`
 - `duplicates_file2.json`
@@ -212,6 +213,7 @@ Additional clean-export metric:
 - Ignore Fields: fields excluded from duplicate hashing and clean-export comparison (useful for dates/timestamps)
 - Dedupe by fields: optional field subset used by clean changed/new export logic
 - Diff Type filter: limits Diff table to `Added`, `Removed`, or `Changed` records
+- Changed Field filter: limits Diff table to changed rows containing a selected changed field
 
 ## 🧭 Results Navigation UX
 

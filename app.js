@@ -7,7 +7,8 @@ const tableSortState = {
   dup: { key: 'projectCode', direction: 'asc' }
 };
 const tableFilterState = {
-  diffType: 'all'
+  diffType: 'all',
+  changedField: 'all'
 };
 
 function normalizeSortValue(value) {
@@ -42,7 +43,15 @@ function sortableHeader(tableName, columnKey, label) {
 }
 
 function getSortedDiffRows() {
-  const diffRows = (state.diffs || []).filter((d) => tableFilterState.diffType === 'all' || d.type === tableFilterState.diffType);
+  const diffRows = (state.diffs || []).filter((d) => {
+    const typeMatches = tableFilterState.diffType === 'all' || d.type === tableFilterState.diffType;
+    if (!typeMatches) return false;
+
+    if (tableFilterState.changedField === 'all') return true;
+    if (d.type !== 'changed') return false;
+
+    return Object.prototype.hasOwnProperty.call(d.changes || {}, tableFilterState.changedField);
+  });
   const { key, direction } = tableSortState.diff;
   const accessor = (d) => {
     if (key === 'key') return normalizeSortValue(d.key);
@@ -92,7 +101,7 @@ function renderDiffTable() {
   const dtHTML = diffs.length === 0
     ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
     : sortedFilteredDiffs.length === 0
-      ? '<p class="text-sm text-slate-600 font-medium py-4">No diff records match the selected type filter.</p>'
+      ? '<p class="text-sm text-slate-600 font-medium py-4">No diff records match the selected filters.</p>'
     : `<table>
         <thead><tr>${sortableHeader('diff', 'key', 'ProjectCode')}${sortableHeader('diff', 'type', 'Type')}${sortableHeader('diff', 'title', 'Title')}${sortableHeader('diff', 'bidStatus', 'BidStatus')}${sortableHeader('diff', 'changedFields', 'Changed Fields')}</tr></thead>
         <tbody>
@@ -156,6 +165,58 @@ function setDiffTypeFilter(value) {
   const allowed = new Set(['all', 'added', 'removed', 'changed']);
   tableFilterState.diffType = allowed.has(value) ? value : 'all';
   renderDiffTable();
+}
+
+function setChangedFieldFilter(value, shouldRender = true) {
+  const select = document.getElementById('changedFieldFilter');
+  if (!select || select.disabled) {
+    tableFilterState.changedField = 'all';
+    if (shouldRender) renderDiffTable();
+    return;
+  }
+
+  const optionValues = new Set([...select.options].map((option) => option.value));
+  tableFilterState.changedField = optionValues.has(value) ? value : 'all';
+  select.value = tableFilterState.changedField;
+
+  if (shouldRender) renderDiffTable();
+}
+
+function renderChangedFieldFilterOptions() {
+  const select = document.getElementById('changedFieldFilter');
+  if (!select) return;
+
+  const previousValue = tableFilterState.changedField;
+  const changedFields = [...new Set(
+    (state.diffs || [])
+      .filter((d) => d.type === 'changed')
+      .flatMap((d) => Object.keys(d.changes || {}))
+  )].sort((a, b) => a.localeCompare(b));
+
+  select.innerHTML = '';
+
+  const allOption = document.createElement('option');
+  allOption.value = 'all';
+  allOption.textContent = 'All changed fields';
+  select.appendChild(allOption);
+
+  changedFields.forEach((field) => {
+    const option = document.createElement('option');
+    option.value = field;
+    option.textContent = field;
+    select.appendChild(option);
+  });
+
+  select.disabled = changedFields.length === 0;
+
+  if (changedFields.length === 0) {
+    tableFilterState.changedField = 'all';
+    select.value = 'all';
+    return;
+  }
+
+  tableFilterState.changedField = changedFields.includes(previousValue) ? previousValue : 'all';
+  select.value = tableFilterState.changedField;
 }
 
 function setActiveResultsSideLink(sectionId) {
@@ -505,9 +566,18 @@ async function run() {
     hasAnalyzed: true
   };
 
+  renderChangedFieldFilterOptions();
+
   const diffTypeFilter = document.getElementById('diffTypeFilter');
   if (diffTypeFilter) {
-    setDiffTypeFilter(diffTypeFilter.value);
+    const allowed = new Set(['all', 'added', 'removed', 'changed']);
+    tableFilterState.diffType = allowed.has(diffTypeFilter.value) ? diffTypeFilter.value : 'all';
+    diffTypeFilter.value = tableFilterState.diffType;
+  }
+
+  const changedFieldFilter = document.getElementById('changedFieldFilter');
+  if (changedFieldFilter) {
+    setChangedFieldFilter(changedFieldFilter.value, false);
   }
 
   setCleanExportStaleNotice(false);
@@ -601,6 +671,7 @@ function dlDiff() {
   const out = {
     uniqueKey: state.uk || 'ProjectCode',
     appliedTypeFilter: tableFilterState.diffType,
+    appliedChangedFieldFilter: tableFilterState.changedField,
     totalRows: outRows.length,
     rows: outRows,
     originalRecords: {
