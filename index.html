@@ -221,6 +221,26 @@
     </div>
   </main>
 
+  <div id="changesModal" class="changes-modal hidden" role="dialog" aria-modal="true" aria-labelledby="changesModalTitle">
+    <div class="changes-modal-backdrop" onclick="closeChangesModal()"></div>
+    <div class="changes-modal-panel" role="document">
+      <div class="changes-modal-header">
+        <div>
+          <h3 id="changesModalTitle" class="changes-modal-title">Changed Values</h3>
+          <p id="changesModalMeta" class="changes-modal-meta"></p>
+        </div>
+        <button id="changesModalClose" type="button" class="changes-modal-close" onclick="closeChangesModal()" aria-label="Close expanded changes view">Close</button>
+      </div>
+      <div class="changes-modal-body">
+        <div class="changes-legend">
+          <span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span>
+          <span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span>
+        </div>
+        <pre id="changesModalJson" class="changes-json changes-json-modal"></pre>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

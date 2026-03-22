@@ -91,6 +91,9 @@
   - Expanded JSON details include source legend chips (File 1 `from` vs File 2 `to`)
   - Changed values are color-highlighted by source (File 1 and File 2 use distinct colors)
   - Expanded JSON panel is resizable so reviewers can enlarge it for long nested values
+  - Optional Maximize JSON modal opens a large viewport for easier full-record change review
+  - Modal JSON includes comprehensive syntax highlighting for keys, strings, numbers, booleans, and punctuation at all nesting levels
+  - Array-of-objects values (BidDocuments, etc.) expand with one object per line in modal for clarity
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
   - Duplicate shows current displayed total
@@ -173,6 +176,13 @@ Any object entry is treated as a “record”.
   - File 2 value (`to`)
 - The `from` and `to` values are visually highlighted using different colors to speed up side-by-side review.
 - The JSON panel supports drag-to-resize, making long values easier to inspect without leaving the table context.
+- A Maximize JSON action opens the same highlighted payload in a larger modal viewport with comprehensive syntax highlighting:
+  - Keys in blue
+  - String values in dark blue
+  - Numbers in medium blue
+  - Booleans and null in red
+  - Structural punctuation in dark gray
+- Array-of-objects values (such as document arrays) expand with one object per line in the modal for maximum clarity.
 - This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
 - Accessibility note: labels and legend text communicate meaning in addition to color.
 

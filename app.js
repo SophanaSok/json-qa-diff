@@ -51,9 +51,143 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function beautifyArrayOfObjects(value) {
+  if (!Array.isArray(value)) return null;
+  if (value.length === 0) return '[]';
+  if (typeof value[0] !== 'object' || value[0] === null) return null;
+
+  const items = value.map((item) => {
+    const json = JSON.stringify(item, null, 2);
+    return json
+      .split('\n')
+      .map((line, idx) => (idx === 0 ? `    ${line}` : `    ${line}`))
+      .join('\n');
+  });
+
+  return `[\n${items.join(',\n')}\n  ]`;
+}
+
 function stringifyDiffValue(value) {
   const serialized = value === undefined ? 'undefined' : JSON.stringify(value, null, 2);
   return escapeHtml(serialized === undefined ? 'undefined' : serialized);
+}
+
+function stringifyDiffValueRaw(value) {
+  if (value === undefined) return 'undefined';
+  const beautified = beautifyArrayOfObjects(value);
+  if (beautified !== null) return beautified;
+  const serialized = JSON.stringify(value, null, 2);
+  return serialized === undefined ? 'undefined' : serialized;
+}
+
+function renderSourceValueLine(label, value, sourceClass, trailingComma = false) {
+  const rawValue = stringifyDiffValueRaw(value);
+  const escapedValue = escapeHtml(rawValue);
+  const comma = trailingComma ? ',' : '';
+
+  if (!rawValue.includes('\n')) {
+    return `    &quot;${label}&quot;: <span class="change-value ${sourceClass}">${escapedValue}</span>${comma}`;
+  }
+
+  const indentedMultilineValue = escapedValue
+    .split('\n')
+    .map((line, index) => (index === 0 ? line : `      ${line}`))
+    .join('\n');
+
+  return `    &quot;${label}&quot;:\n      <span class="change-value ${sourceClass} change-value-multiline">${indentedMultilineValue}</span>${comma}`;
+}
+
+function buildHighlightedChangesJson(diffRow) {
+  const changedFields = Object.keys(diffRow?.changes || {});
+  const highlightedChanges = changedFields
+    .map((field) => {
+      const fromValue = stringifyDiffValue(diffRow.changes[field]?.from);
+      const toValue = stringifyDiffValue(diffRow.changes[field]?.to);
+      return `  &quot;${escapeHtml(field)}&quot;: {\n    &quot;from&quot;: <span class="change-value change-value-file1">${fromValue}</span>,\n    &quot;to&quot;: <span class="change-value change-value-file2">${toValue}</span>\n  }`;
+    })
+    .join(',\n');
+
+  return `{\n${highlightedChanges}\n}`;
+}
+
+function syntaxHighlightJson(jsonHtml) {
+  let result = jsonHtml;
+  
+  // Highlight all keys (quoted text before :) - including nested in objects/arrays
+  result = result.replace(/(&quot;[^&]*?&quot;)(\s*)(?=:(?![^<]*<\/span>))/g, '<span class="json-key">$1</span>$2');
+
+  // Highlight string values (quoted text after : or ,)
+  result = result.replace(/(:\s*)(&quot;[^&]*?&quot;)(?![^<]*<\/span>)/g, '$1<span class="json-value-string">$2</span>');
+  result = result.replace(/(\[\s*)(&quot;[^&]*?&quot;)/g, '$1<span class="json-value-string">$2</span>');
+
+  // Highlight numbers (sequences of digits with optional decimals)
+  result = result.replace(/(:\s*|,\s*|\[\s*)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?![^<]*<\/span>)/g, '$1<span class="json-value-number">$2</span>');
+
+  // Highlight booleans and null
+  result = result.replace(/(:\s*|,\s*|\[\s*)(true|false|null)(?![^<]*<\/span>)/gi, '$1<span class="json-value-keyword">$2</span>');
+
+  // Highlight punctuation: colons, commas, braces, brackets
+  result = result.replace(/([{}\[\]:,])/g, '<span class="json-punct">$1</span>');
+
+  return result;
+}
+
+function buildBeautifiedModalChangesJson(diffRow) {
+  const changedFields = Object.keys(diffRow?.changes || {}).sort((a, b) => a.localeCompare(b));
+  const highlightedChanges = changedFields
+    .map((field, index) => {
+      const change = diffRow.changes[field] || {};
+      const fieldBlock = [
+        `  <span class="json-key">&quot;${escapeHtml(field)}&quot;</span><span class="json-punct">:</span> <span class="json-punct">{</span>`,
+        renderSourceValueLine('from', change.from, 'change-value-file1', true),
+        renderSourceValueLine('to', change.to, 'change-value-file2', false),
+        `  <span class="json-punct">}${index < changedFields.length - 1 ? ',' : ''}</span>`
+      ];
+      return fieldBlock.join('\n');
+    })
+    .join('\n');
+
+  const wrapped = `<span class="json-punct">{</span>\n${highlightedChanges}\n<span class="json-punct">}</span>`;
+  return syntaxHighlightJson(wrapped);
+}
+
+function getChangedDiffRowByKey(encodedKey) {
+  const decodedKey = decodeURIComponent(encodedKey || '');
+  return (state.diffs || []).find((d) => d.type === 'changed' && String(d.key) === decodedKey);
+}
+
+function openChangesModalByKey(encodedKey) {
+  const row = getChangedDiffRowByKey(encodedKey);
+  if (!row) return;
+
+  const modal = document.getElementById('changesModal');
+  const meta = document.getElementById('changesModalMeta');
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!modal || !meta || !jsonEl) return;
+
+  const changedFieldCount = Object.keys(row.changes || {}).length;
+  meta.textContent = `${row.key} • ${changedFieldCount} changed field${changedFieldCount === 1 ? '' : 's'}`;
+  jsonEl.innerHTML = buildBeautifiedModalChangesJson(row);
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  document.getElementById('changesModalClose')?.focus();
+}
+
+function closeChangesModal() {
+  const modal = document.getElementById('changesModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+}
+
+function initChangesModalBindings() {
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const modal = document.getElementById('changesModal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    closeChangesModal();
+  });
 }
 
 function renderChangedFieldsCell(diffRow) {
@@ -65,15 +199,9 @@ function renderChangedFieldsCell(diffRow) {
     .join('');
   const changedSummaryLabel = `${changedFields.length} field${changedFields.length === 1 ? '' : 's'} changed`;
 
-  const highlightedChanges = changedFields
-    .map((field) => {
-      const fromValue = stringifyDiffValue(diffRow.changes[field]?.from);
-      const toValue = stringifyDiffValue(diffRow.changes[field]?.to);
-      return `  &quot;${escapeHtml(field)}&quot;: {\n    &quot;from&quot;: <span class="change-value change-value-file1">${fromValue}</span>,\n    &quot;to&quot;: <span class="change-value change-value-file2">${toValue}</span>\n  }`;
-    })
-    .join(',\n');
+  const encodedKey = encodeURIComponent(String(diffRow.key ?? ''));
 
-  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><pre class="changes-json">{\n${highlightedChanges}\n}</pre></details>`;
+  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json">${buildHighlightedChangesJson(diffRow)}</pre></details>`;
 }
 
 function getSortedDiffRows() {
@@ -759,3 +887,4 @@ function initDocumentationCard() {
 initDocumentationCard();
 initStaleMetricHint();
 initResultsSideMenuHighlight();
+initChangesModalBindings();
