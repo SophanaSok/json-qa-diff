@@ -57,7 +57,9 @@
 - Improved Changed Fields details UX in Diff Records:
   - Compact summary line shows count of changed fields
   - Chips show all changed field names for the row
-  - Expanded JSON details are wrapped and scroll within a bounded panel for better readability
+  - Expanded JSON details include source legend chips (File 1 `from` vs File 2 `to`)
+  - Changed values are color-highlighted by source (File 1 and File 2 use distinct colors)
+  - Expanded JSON panel is resizable so reviewers can enlarge it for long nested values
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
   - Duplicate shows current displayed total
@@ -87,7 +89,7 @@ Any object entry is treated as a “record”.
 - `Added`: key missing in File 1
 - `Removed`: key missing in File 2
 - `Changed`: key exists in both, non-identical record data
-- Field-level changes are shown as value deltas for easy review
+- Field-level changes are shown as value deltas for easy review, with source-based highlighting for `from` and `to` values
 - `Changed` comparisons are full-record comparisons (not reduced by **Ignore Fields**)
 
 ### Changed field details readability
@@ -96,7 +98,11 @@ Any object entry is treated as a “record”.
 - The summary now prioritizes scannability by showing:
   - Total changed-field count
   - A full chip list of all changed field names
-- Expanded JSON output now uses wrapped text and an internal scroll container to avoid layout overflow on long values.
+- Expanded details include a legend for source values:
+  - File 1 value (`from`)
+  - File 2 value (`to`)
+- The `from` and `to` values are visually highlighted using different colors to speed up side-by-side review.
+- The JSON panel supports drag-to-resize, making long values easier to inspect without leaving the table context.
 - This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
 
 ## 🧹 Duplicate behavior
