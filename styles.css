@@ -432,6 +432,35 @@ details summary {
   color: #475569;
 }
 
+.changes-json-shortcuts {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.changes-json-shortcuts-label {
+  font-weight: 700;
+  color: #475569;
+  margin-right: 0.2rem;
+}
+
+.changes-json-shortcuts kbd {
+  display: inline-block;
+  min-width: 1.15rem;
+  border: 1px solid #cbd5e1;
+  border-bottom-width: 2px;
+  border-radius: 0.35rem;
+  padding: 0.02rem 0.28rem;
+  margin: 0 0.04rem;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  line-height: 1.2;
+}
+
 .changes-json-modal {
   margin-top: 0.6rem;
   width: 100%;
@@ -541,6 +570,17 @@ details summary {
 
 .json-line-search-active {
   background: rgba(250, 204, 21, 0.36);
+}
+
+.json-token-match {
+  background: rgba(251, 191, 36, 0.35);
+  color: inherit;
+  border-radius: 0.15rem;
+  padding: 0 0.05rem;
+}
+
+.json-line-search-active .json-token-match {
+  background: rgba(245, 158, 11, 0.5);
 }
 
 .json-fold-btn {

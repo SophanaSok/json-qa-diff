@@ -12,6 +12,7 @@ const tableFilterState = {
 };
 const changesModalViewState = {
   plainLines: [],
+  htmlLines: [],
   sectionMap: new Map(),
   collapsedSections: new Set(),
   searchMatches: [],
@@ -233,6 +234,7 @@ function renderChangesModalEditor(diffRow) {
 
   const model = buildChangesModalEditorModel(diffRow);
   changesModalViewState.plainLines = model.lines.map((line) => line.text);
+  changesModalViewState.htmlLines = model.lines.map((line) => line.html || '&nbsp;');
   changesModalViewState.sectionMap = model.sectionMap;
   changesModalViewState.collapsedSections = new Set();
   changesModalViewState.searchMatches = [];
@@ -270,6 +272,57 @@ function renderChangesModalEditor(diffRow) {
     searchInput.value = '';
   }
   setModalSearchCountText(0, 0);
+}
+
+function clearJsonTokenMatchHighlights(container) {
+  if (!container) return;
+  container.querySelectorAll('mark.json-token-match').forEach((markEl) => {
+    const parent = markEl.parentNode;
+    if (!parent) return;
+    parent.replaceChild(document.createTextNode(markEl.textContent || ''), markEl);
+    parent.normalize();
+  });
+}
+
+function highlightQueryInLineCode(codeEl, queryLower) {
+  if (!codeEl || !queryLower) return;
+
+  const textNodes = [];
+  const walker = document.createTreeWalker(codeEl, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node?.nodeValue) textNodes.push(node);
+  }
+
+  textNodes.forEach((textNode) => {
+    const raw = textNode.nodeValue || '';
+    const haystack = raw.toLowerCase();
+    let fromIndex = 0;
+    let idx = haystack.indexOf(queryLower, fromIndex);
+    if (idx === -1) return;
+
+    const fragment = document.createDocumentFragment();
+    while (idx !== -1) {
+      if (idx > fromIndex) {
+        fragment.appendChild(document.createTextNode(raw.slice(fromIndex, idx)));
+      }
+
+      const end = idx + queryLower.length;
+      const mark = document.createElement('mark');
+      mark.className = 'json-token-match';
+      mark.textContent = raw.slice(idx, end);
+      fragment.appendChild(mark);
+
+      fromIndex = end;
+      idx = haystack.indexOf(queryLower, fromIndex);
+    }
+
+    if (fromIndex < raw.length) {
+      fragment.appendChild(document.createTextNode(raw.slice(fromIndex)));
+    }
+
+    textNode.parentNode?.replaceChild(fragment, textNode);
+  });
 }
 
 function applyChangesModalWrapState() {
@@ -361,6 +414,7 @@ function runChangesModalSearch() {
 
   jsonEl.querySelectorAll('.json-line').forEach((rowEl) => {
     rowEl.classList.remove('json-line-search-hit', 'json-line-search-active');
+    clearJsonTokenMatchHighlights(rowEl);
     if (!query) return;
 
     const lineNumber = Number(rowEl.dataset.lineNumber);
@@ -369,6 +423,7 @@ function runChangesModalSearch() {
     if (rowEl.classList.contains('is-fold-hidden')) return;
 
     rowEl.classList.add('json-line-search-hit');
+    highlightQueryInLineCode(rowEl.querySelector('.json-code'), query);
     changesModalViewState.searchMatches.push(lineNumber);
   });
 
@@ -412,6 +467,39 @@ function stepChangesModalSearch(direction) {
   const next = (changesModalViewState.activeMatchIndex + direction + total) % total;
   changesModalViewState.activeMatchIndex = next;
   focusChangesModalSearchMatch();
+}
+
+function getVisibleModalLineElements() {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl) return [];
+  return [...jsonEl.querySelectorAll('.json-line')].filter((lineEl) => !lineEl.classList.contains('is-fold-hidden'));
+}
+
+function setActiveChangesModalLine(lineEl) {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl || !lineEl) return;
+  jsonEl.querySelector('.json-line.is-active')?.classList.remove('is-active');
+  lineEl.classList.add('is-active');
+  changesModalViewState.activeLine = Number(lineEl.dataset.lineNumber);
+  lineEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function moveActiveChangesModalLine(direction) {
+  const visibleLines = getVisibleModalLineElements();
+  if (visibleLines.length === 0) return;
+
+  const currentIndex = visibleLines.findIndex((lineEl) => Number(lineEl.dataset.lineNumber) === changesModalViewState.activeLine);
+  const fallback = direction > 0 ? 0 : visibleLines.length - 1;
+  const startIndex = currentIndex >= 0 ? currentIndex : fallback;
+  const targetIndex = Math.max(0, Math.min(visibleLines.length - 1, startIndex + direction));
+  setActiveChangesModalLine(visibleLines[targetIndex]);
+}
+
+function isTypingTarget(target) {
+  if (!target) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 }
 
 async function copyChangesModalJson() {
@@ -590,6 +678,25 @@ function initChangesModalBindings() {
       searchInput?.focus();
       searchInput?.select();
       return;
+    }
+
+    if (!event.ctrlKey && !event.metaKey && !event.altKey && !isTypingTarget(event.target)) {
+      const key = event.key.toLowerCase();
+      if (key === 'j') {
+        event.preventDefault();
+        moveActiveChangesModalLine(1);
+        return;
+      }
+      if (key === 'k') {
+        event.preventDefault();
+        moveActiveChangesModalLine(-1);
+        return;
+      }
+      if (key === 'n') {
+        event.preventDefault();
+        stepChangesModalSearch(event.shiftKey ? -1 : 1);
+        return;
+      }
     }
 
     if (event.key !== 'Escape') return;
