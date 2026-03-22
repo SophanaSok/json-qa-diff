@@ -54,6 +54,10 @@
 - Sortable columns in **Diff Records** and **Duplicate Records** tables (ascending/descending)
 - Diff type filter (`All`, `Added`, `Removed`, `Changed`) with live table updates
 - Changed Field filter in Diff Records (dynamically populated from detected changed fields)
+- Improved Changed Fields details UX in Diff Records:
+  - Compact summary line shows count of changed fields
+  - Preview chips show up to 3 field names with a `+N more` indicator
+  - Expanded JSON details are wrapped and scroll within a bounded panel for better readability
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
   - Duplicate shows current displayed total
@@ -85,6 +89,16 @@ Any object entry is treated as a “record”.
 - `Changed`: key exists in both, non-identical record data
 - Field-level changes are shown as value deltas for easy review
 - `Changed` comparisons are full-record comparisons (not reduced by **Ignore Fields**)
+
+### Changed field details readability
+
+- In the **Changed Fields** column, each changed row uses an expandable details block.
+- The summary now prioritizes scannability by showing:
+  - Total changed-field count
+  - A short chip list preview of field names
+  - `+N more` when additional fields exist
+- Expanded JSON output now uses wrapped text and an internal scroll container to avoid layout overflow on long values.
+- This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
 
 ## 🧹 Duplicate behavior
 
