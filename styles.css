@@ -124,6 +124,36 @@ details summary {
   max-width: min(40rem, 72vw);
 }
 
+.changes-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.changes-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.changes-legend-chip-file1 {
+  color: #9f1239;
+  background: #ffe4e6;
+  border: 1px solid #fecdd3;
+}
+
+.changes-legend-chip-file2 {
+  color: #0f766e;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+}
+
 .changes-details summary {
   display: flex;
   flex-direction: column;
@@ -174,6 +204,27 @@ details summary {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
+  resize: both;
+  min-height: 9rem;
+  max-height: none;
+  width: min(100%, 40rem);
+}
+
+.change-value {
+  display: inline;
+  border-radius: 0.3rem;
+  padding: 0 0.2rem;
+  font-weight: 600;
+}
+
+.change-value-file1 {
+  color: #9f1239;
+  background: rgba(244, 63, 94, 0.16);
+}
+
+.change-value-file2 {
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.18);
 }
 
 details pre {

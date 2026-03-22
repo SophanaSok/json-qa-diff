@@ -51,6 +51,11 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function stringifyDiffValue(value) {
+  const serialized = value === undefined ? 'undefined' : JSON.stringify(value, null, 2);
+  return escapeHtml(serialized === undefined ? 'undefined' : serialized);
+}
+
 function renderChangedFieldsCell(diffRow) {
   if (diffRow.type !== 'changed') return '—';
 
@@ -60,7 +65,15 @@ function renderChangedFieldsCell(diffRow) {
     .join('');
   const changedSummaryLabel = `${changedFields.length} field${changedFields.length === 1 ? '' : 's'} changed`;
 
-  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><pre class="changes-json">${escapeHtml(JSON.stringify(diffRow.changes, null, 2))}</pre></details>`;
+  const highlightedChanges = changedFields
+    .map((field) => {
+      const fromValue = stringifyDiffValue(diffRow.changes[field]?.from);
+      const toValue = stringifyDiffValue(diffRow.changes[field]?.to);
+      return `  &quot;${escapeHtml(field)}&quot;: {\n    &quot;from&quot;: <span class="change-value change-value-file1">${fromValue}</span>,\n    &quot;to&quot;: <span class="change-value change-value-file2">${toValue}</span>\n  }`;
+    })
+    .join(',\n');
+
+  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><pre class="changes-json">{\n${highlightedChanges}\n}</pre></details>`;
 }
 
 function getSortedDiffRows() {
