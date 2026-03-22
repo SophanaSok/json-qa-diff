@@ -52,16 +52,31 @@ function escapeHtml(value) {
 }
 
 function beautifyArrayOfObjects(value) {
-  if (!Array.isArray(value)) return null;
-  if (value.length === 0) return '[]';
-  if (typeof value[0] !== 'object' || value[0] === null) return null;
+  let arr = value;
+  
+  // If value is a stringified JSON, try to parse it
+  if (typeof value === 'string') {
+    try {
+      arr = JSON.parse(value);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  if (!Array.isArray(arr)) return null;
+  if (arr.length === 0) return '[]';
+  if (typeof arr[0] !== 'object' || arr[0] === null) return null;
 
-  const items = value.map((item) => {
-    const json = JSON.stringify(item, null, 2);
-    return json
-      .split('\n')
-      .map((line, idx) => (idx === 0 ? `    ${line}` : `    ${line}`))
-      .join('\n');
+  const items = arr.map((item) => {
+    const keys = Object.keys(item);
+    const pairs = keys.map((key) => {
+      const val = item[key];
+      const serializedVal = JSON.stringify(val);
+      return `      "${key}": ${serializedVal}`;
+    });
+    
+    const objectContent = pairs.join(',\n');
+    return `    {\n${objectContent}\n    }`;
   });
 
   return `[\n${items.join(',\n')}\n  ]`;

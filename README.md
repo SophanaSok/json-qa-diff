@@ -93,7 +93,7 @@
   - Expanded JSON panel is resizable so reviewers can enlarge it for long nested values
   - Optional Maximize JSON modal opens a large viewport for easier full-record change review
   - Modal JSON includes comprehensive syntax highlighting for keys, strings, numbers, booleans, and punctuation at all nesting levels
-  - Array-of-objects values (BidDocuments, etc.) expand with one object per line in modal for clarity
+  - Array-of-objects values (BidDocuments, etc.) expand with one object per line in modal, with each key/value pair on its own line for at-a-glance readability
 - Live record counters for Diff and Duplicate sections
   - Diff shows filtered vs total when a type filter is active
   - Duplicate shows current displayed total
@@ -182,7 +182,10 @@ Any object entry is treated as a “record”.
   - Numbers in medium blue
   - Booleans and null in red
   - Structural punctuation in dark gray
-- Array-of-objects values (such as document arrays) expand with one object per line in the modal for maximum clarity.
+- Array-of-objects values (such as document arrays) expand with:
+  - One object per line in the array
+  - Each key/value pair within an object on its own line with consistent indentation
+  - Full syntax highlighting applied to all nested elements
 - This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
 - Accessibility note: labels and legend text communicate meaning in addition to color.
 
