@@ -6,9 +6,15 @@
 
 A simple browser tool to compare two JSON exports, find what changed, catch duplicates, and download clean outputs.
 
+Best for QA checks, migration validation, and quick before/after data review.
+
 ## Start Here (GitHub Pages Users)
 
 Open the app: https://SophanaSok.github.io/json-qa-diff/
+
+### In one sentence
+
+Upload two JSON files, click Analyze, review changes/duplicates, and download the exact result files you need.
 
 ### What you can do with it
 
@@ -27,6 +33,15 @@ Open the app: https://SophanaSok.github.io/json-qa-diff/
 5. Review Summary, Diff Records, and Duplicate Records.
 6. Download the artifact you need.
 
+### Choose your path
+
+- I need a quick pass/fail comparison:
+  - Check Summary first, then scan Diff Records.
+- I need a clean output for downstream use:
+  - Use Download Combined & Deduped to get `changed_and_new.json`.
+- I need to investigate duplicate noise:
+  - Use Duplicate Records, then tune Ignore Fields and re-run Analyze.
+
 ### What you see after Analyze
 
 | Area | What you can do |
@@ -42,16 +57,19 @@ Open the app: https://SophanaSok.github.io/json-qa-diff/
 
 - Use Diff Records to verify important business changes.
 - Use Changed Field filter to focus on specific fields.
+- Use Maximize JSON for long, nested field values.
 
 #### 2) Create a clean handoff file
 
 - Use Download Combined & Deduped to generate `changed_and_new.json`.
 - Use Dedupe by fields when you want matching based on specific fields only.
+- Re-run Analyze after changing options so output metrics stay accurate.
 
 #### 3) Investigate duplicate records
 
 - Use Duplicate Records and duplicate exports to inspect matches.
 - Tune Ignore Fields to reduce false positives.
+- Confirm schema mismatch warnings before final decisions.
 
 ### Before you start
 
@@ -65,6 +83,10 @@ Open the app: https://SophanaSok.github.io/json-qa-diff/
 ### Why do I see fewer rows in `diff_records.json` than expected?
 
 - The export respects your current Diff filters and sort order.
+
+### Do I need to click Analyze again after changing settings?
+
+- Yes. Exports and dashboard metrics are based on the most recent Analyze run.
 
 ### Why is a record missing from `changed_and_new.json`?
 
@@ -97,6 +119,12 @@ Open the app: https://SophanaSok.github.io/json-qa-diff/
   - Re-run Analyze because metrics and exports depend on the last analysis.
 - Long values in changed JSON are hard to read:
   - Open Maximize JSON and use the wrapped modal view.
+
+### Good defaults for first-time users
+
+- Keep Unique Key as `ProjectCode` unless your file uses a different stable key.
+- Start with Ignore Fields: `Created,Modified,Refreshed`.
+- Leave Dedupe by fields blank until you need field-specific matching.
 
 ---
 
