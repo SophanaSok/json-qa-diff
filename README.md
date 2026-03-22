@@ -2,9 +2,33 @@
 
 [![GitHub Pages](https://github.com/SophanaSok/json-qa-diff/actions/workflows/pages/pages-build-deployment/badge.svg)](https://SophanaSok.github.io/json-qa-diff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Processing: Local Browser](https://img.shields.io/badge/Processing-Local%20Browser-16a34a)](#privacy)
+[![Processing: Local Browser](https://img.shields.io/badge/Processing-Local%20Browser-16a34a)](#privacy-and-security)
 
 **JSON QA Diff Tool** is a lightweight, browser-only utility for comparing two JSON exports, detecting record-level differences, and exposing duplicate records for QA and reconciliation use cases.
+
+## Table of Contents
+
+- [Quick Start Guide](#-quick-start-guide)
+- [Before You Start](#-before-you-start)
+- [Purpose](#-purpose)
+- [Core Features](#-core-features)
+- [JSON input expectations](#-json-input-expectations)
+- [Minimal input examples](#-minimal-input-examples)
+- [Diffing behavior](#-diffing-behavior)
+- [Duplicate behavior](#-duplicate-behavior)
+- [Clean changed/new export behavior](#-clean-changednew-export-behavior)
+- [Summary dashboard breakdown](#-summary-dashboard-breakdown)
+- [Outputs](#-outputs)
+- [Options](#-options)
+- [Results Navigation UX](#-results-navigation-ux)
+- [Best practices](#-best-practices)
+- [FAQ](#-faq)
+- [Troubleshooting](#-troubleshooting)
+- [Privacy and Security](#-privacy-and-security)
+- [Changelog](#-changelog)
+- [Contribute](#-contribute)
+- [Glossary](#-glossary)
+- [License](#-license)
 
 ## ⚡ Quick Start Guide
 
@@ -27,6 +51,13 @@
 
 - Run **Analyze** before downloading artifacts.
 - If you change files or settings after analysis, run **Analyze** again to refresh metrics/export projections.
+
+## ✅ Before You Start
+
+- Recommended browser: current Chrome, Edge, Firefox, or Safari.
+- Data is processed in-memory in your browser, so very large files depend on local device RAM/CPU.
+- For best responsiveness, start with smaller exports first, then move to full datasets.
+- Ensure the configured **Unique Key** exists and is populated in both files.
 
 ## 🔍 Purpose
 
@@ -83,6 +114,37 @@ The tool supports 3 JSON structures:
 
 Any object entry is treated as a “record”.
 
+## 🧪 Minimal input examples
+
+### 1) Plain array
+
+```json
+[
+  { "ProjectCode": "A-1", "Title": "Bridge Repair", "BidStatus": "Open" },
+  { "ProjectCode": "A-2", "Title": "Road Striping", "BidStatus": "Closed" }
+]
+```
+
+### 2) Export wrapper
+
+```json
+{
+  "Export": [
+    { "ProjectCode": "A-1", "Title": "Bridge Repair", "BidStatus": "Open" }
+  ]
+}
+```
+
+### 3) Arbitrary top-level key wrapper
+
+```json
+{
+  "Rows": [
+    { "ProjectCode": "A-1", "Title": "Bridge Repair", "BidStatus": "Open" }
+  ]
+}
+```
+
 ## 🧮 Diffing behavior
 
 - Keys matched by Unique Key
@@ -91,6 +153,14 @@ Any object entry is treated as a “record”.
 - `Changed`: key exists in both, non-identical record data
 - Field-level changes are shown as value deltas for easy review, with source-based highlighting for `from` and `to` values
 - `Changed` comparisons are full-record comparisons (not reduced by **Ignore Fields**)
+
+### Edge-case semantics
+
+- Missing unique keys: records with empty/missing keys can collide and produce misleading results.
+- Duplicate unique keys in the same file: last value in map-like processing may dominate row-level comparisons.
+- Field missing on one side: treated as a change for that field.
+- Type changes (for example, `"10"` vs `10`): treated as changed.
+- `null` vs missing/undefined: treated as changed.
 
 ### Changed field details readability
 
@@ -104,6 +174,7 @@ Any object entry is treated as a “record”.
 - The `from` and `to` values are visually highlighted using different colors to speed up side-by-side review.
 - The JSON panel supports drag-to-resize, making long values easier to inspect without leaving the table context.
 - This keeps table columns readable on both desktop and narrow screens while preserving full before/after detail in the JSON payload.
+- Accessibility note: labels and legend text communicate meaning in addition to color.
 
 ## 🧹 Duplicate behavior
 
@@ -250,15 +321,67 @@ Additional clean-export metric:
 - Start with a narrow set of ignored fields, then expand as needed
 - Verify cross-file duplicate findings before applying automated dedupe in downstream workflows
 
-## 🛡️ Privacy
+## ❓ FAQ
+
+### Why are duplicate counts higher than expected?
+
+- The duplicate hash excludes fields listed in **Ignore Fields**, so broad ignore lists can increase matches.
+
+### Why is a record missing from `changed_and_new.json`?
+
+- The clean export excludes true duplicate/noise-only records based on current ignore/dedupe settings.
+
+### Why did `diff_records.json` not include all rows?
+
+- Diff export respects active Diff table filters and current sort order.
+
+### Why do I see a schema mismatch warning?
+
+- File 1 and File 2 first-record field sets differ, which may indicate renamed/added/removed columns.
+
+## 🛠️ Troubleshooting
+
+- Analyze returns unexpected zero changes:
+  - Confirm **Unique Key** is correct and present in both files.
+- README guide page looks blank locally:
+  - Open via an HTTP server (not `file://`) so README can be fetched.
+- Counts changed after editing options:
+  - Re-run **Analyze**; metrics and exports are tied to latest analyzed state.
+- Changed values are hard to inspect:
+  - Expand row details and drag-resize the changed JSON panel.
+
+## 🛡️ Privacy and Security
 
 Data is processed locally in your browser. No network transfer or server side processing.
 
+Documentation rendering in `readme.html` uses CDN-hosted assets (`github-markdown-css` and `marked`) for presentation only.
+
+## 🗓️ Changelog
+
+### 2026-03-22
+
+- Added changed-value source highlighting for File 1 (`from`) and File 2 (`to`).
+- Added legend chips to changed-value details.
+- Made changed JSON details panel resizable.
+- Updated README to include examples, edge-case semantics, FAQ, and troubleshooting.
+
 ## 🤝 Contribute
 
-1. Fork
-2. Update UI, feature logic, bug fix
-3. Open PR with test case or usage update
+1. Fork and clone the repository.
+2. Run a local static server in the project folder, for example:
+   - `python3 -m http.server 8080`
+3. Open `http://localhost:8080` and validate with sample JSON files.
+4. Make changes with clear notes in README for behavior updates.
+5. Open a PR with reproduction steps and before/after behavior summary.
+
+## 📚 Glossary
+
+- Record: one object entry from the parsed input array.
+- Unique Key: field used to align records between File 1 and File 2.
+- Changed row: same key in both files with one or more field deltas.
+- Duplicate row: record considered equal under duplicate hash rules.
+- Cross-file duplicate: duplicate match found across File 1 and File 2.
+- Clean export: `changed_and_new.json`, containing meaningful new/changed rows.
 
 ## 📄 License
 
