@@ -180,7 +180,7 @@ Additional clean-export metric:
 
 ## 💾 Outputs
 
-- `diff_records.json` (added/removed/changed details for the **currently visible Diff set**, respecting active type filter and current sort, with `file1Record` and `file2Record` carrying full original records)
+- `diff_records.json` (added/removed/changed details for the **currently visible Diff set**, respecting active type filter and current sort, with full `record` payload plus `file1Record` and `file2Record` snapshots carrying original records)
 - `duplicates_file1.json`
 - `duplicates_file2.json`
 - `duplicates_cross.json`

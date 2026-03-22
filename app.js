@@ -322,6 +322,11 @@ function fieldDiff(a, b) {
   return changes;
 }
 
+function cloneRecord(record) {
+  if (record === null || record === undefined) return null;
+  return JSON.parse(JSON.stringify(record));
+}
+
 function dedupArray(arr, ignored) {
   const seen = new Map();
   for (const r of arr) {
@@ -424,8 +429,8 @@ async function run() {
           key,
           changes,
           record: r2,
-          file1Record: r1,
-          file2Record: r2
+          file1Record: cloneRecord(r1),
+          file2Record: cloneRecord(r2)
         });
       }
     } else if (r1) {
@@ -433,7 +438,7 @@ async function run() {
         type: 'removed',
         key,
         record: r1,
-        file1Record: r1,
+        file1Record: cloneRecord(r1),
         file2Record: null
       });
     } else {
@@ -442,7 +447,7 @@ async function run() {
         key,
         record: r2,
         file1Record: null,
-        file2Record: r2
+        file2Record: cloneRecord(r2)
       });
     }
   }
@@ -567,6 +572,7 @@ function dlDiff() {
     [state.uk || 'ProjectCode']: d.key,
     type: d.type,
     changes: d.changes || null,
+    record: d.type === 'removed' ? d.file1Record : d.file2Record,
     file1Record: d.file1Record,
     file2Record: d.file2Record
   }));
