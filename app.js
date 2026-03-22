@@ -498,13 +498,10 @@ async function run() {
     dups2,
     crossDups,
     uk,
-    deduped1,
-    deduped2,
     raw1,
     raw2,
     arr1raw: arr1,
     arr2raw: arr2,
-    cleanExportCount,
     hasAnalyzed: true
   };
 
