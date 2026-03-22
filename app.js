@@ -80,6 +80,15 @@ function getSortedDuplicateRows() {
 function renderDiffTable() {
   const diffs = state.diffs || [];
   const sortedFilteredDiffs = getSortedDiffRows();
+  const diffCountLabel = document.getElementById('diffCountLabel');
+  if (diffCountLabel) {
+    if (diffs.length === sortedFilteredDiffs.length) {
+      diffCountLabel.textContent = `${sortedFilteredDiffs.length} record${sortedFilteredDiffs.length === 1 ? '' : 's'}`;
+    } else {
+      diffCountLabel.textContent = `${sortedFilteredDiffs.length} of ${diffs.length} records`;
+    }
+  }
+
   const dtHTML = diffs.length === 0
     ? '<p class="text-sm text-green-600 font-medium py-4">✅ No differences found between these files.</p>'
     : sortedFilteredDiffs.length === 0
@@ -105,6 +114,11 @@ function renderDiffTable() {
 
 function renderDuplicateTable() {
   const allDups = getSortedDuplicateRows();
+  const dupCountLabel = document.getElementById('dupCountLabel');
+  if (dupCountLabel) {
+    dupCountLabel.textContent = `${allDups.length} record${allDups.length === 1 ? '' : 's'}`;
+  }
+
   const dupHTML = allDups.length === 0
     ? '<p class="text-sm text-green-600 font-medium py-4">✅ No duplicates found.</p>'
     : `<table>

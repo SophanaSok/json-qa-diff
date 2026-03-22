@@ -154,9 +154,12 @@
 
       <div id="diffSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
-            <span class="text-lg">🔀</span> Diff Records
-          </h2>
+          <div>
+            <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span class="text-lg">🔀</span> Diff Records
+            </h2>
+            <p id="diffCountLabel" class="text-xs text-gray-500 mt-1">0 records</p>
+          </div>
           <div class="flex items-center gap-2">
             <label for="diffTypeFilter" class="text-xs font-medium text-gray-500">Type</label>
             <select id="diffTypeFilter" onchange="setDiffTypeFilter(this.value)"
@@ -180,9 +183,12 @@
 
       <div id="dupSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
-            <span class="text-lg">♻️</span> Duplicate Records
-          </h2>
+          <div>
+            <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span class="text-lg">♻️</span> Duplicate Records
+            </h2>
+            <p id="dupCountLabel" class="text-xs text-gray-500 mt-1">0 records</p>
+          </div>
           <div class="flex gap-2">
             <button onclick="dlDups('file1')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
