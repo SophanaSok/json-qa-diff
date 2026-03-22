@@ -110,7 +110,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - View array-of-object values in a scan-friendly format
 - Use line numbers and active-line highlighting for easier review
 - Search changed JSON with inline token-level match highlighting
-- Navigate results with `Prev/Next`, `Enter`, or keyboard (`n` / `Shift+n`)
+- Navigate results with `Prev/Next`, `Enter`, or `Shift+Enter`
 - Navigate lines with keyboard (`j` / `k`)
 - Use `Ctrl/Cmd+F` to focus search and `Esc` to close the modal
 - Toggle wrap (`Wrap: On/Off`) for long content
@@ -184,7 +184,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Code-editor modal with line numbers + active-line highlighting
   - Modal syntax highlighting (keys, strings, numbers, booleans/null, punctuation)
   - Search with token-level match highlighting + result navigation
-  - Keyboard shortcuts (`j/k`, `n/Shift+n`, `Ctrl/Cmd+F`, `Esc`)
+  - Keyboard shortcuts (`j/k`, `Enter/Shift+Enter`, `Ctrl/Cmd+F`, `Esc`)
   - Wrap toggle (`Wrap: On/Off`)
   - Font-size controls (`A-` / `A+`)
   - Copy JSON action
@@ -276,7 +276,7 @@ Any object entry is treated as a record.
 - Modal supports larger viewport and code-editor readability tools:
   - Line numbers + active-line highlight
   - Search with token-level match highlighting
-  - Keyboard shortcuts (`j/k`, `n/Shift+n`, `Ctrl/Cmd+F`, `Esc`)
+  - Keyboard shortcuts (`j/k`, `Enter/Shift+Enter`, `Ctrl/Cmd+F`, `Esc`)
   - Wrap toggle, font controls, copy action
   - Collapsible changed-field blocks
 - Array-of-objects values render for at-a-glance scanning

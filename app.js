@@ -692,11 +692,6 @@ function initChangesModalBindings() {
         moveActiveChangesModalLine(-1);
         return;
       }
-      if (key === 'n') {
-        event.preventDefault();
-        stepChangesModalSearch(event.shiftKey ? -1 : 1);
-        return;
-      }
     }
 
     if (event.key !== 'Escape') return;
