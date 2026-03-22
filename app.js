@@ -433,6 +433,7 @@ async function run() {
   renderDuplicateTable();
 
   document.getElementById('results').classList.remove('hidden');
+  document.getElementById('resultsSideMenu')?.classList.remove('hidden');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 }
 

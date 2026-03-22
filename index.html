@@ -8,6 +8,11 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
+  <nav id="resultsSideMenu" class="hidden results-side-menu" aria-label="Results navigation">
+    <a href="#diffSection" class="results-side-link">Diff Records</a>
+    <a href="#dupSection" class="results-side-link">Duplicate Records</a>
+  </nav>
+
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -147,7 +152,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div id="diffSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
             <span class="text-lg">🔀</span> Diff Records
@@ -173,7 +178,7 @@
         <div id="diffTable"></div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div id="dupSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
             <span class="text-lg">♻️</span> Duplicate Records

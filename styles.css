@@ -4,6 +4,43 @@
   border-collapse: collapse;
   font-size: 0.82rem;
 }
+
+.results-side-menu {
+  position: fixed;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  z-index: 20;
+}
+
+.results-side-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.results-side-link:hover,
+.results-side-link:focus-visible {
+  background: #f1f5f9;
+  color: #0f172a;
+  outline: none;
+}
 #diffTable th,
 #dupTable th {
   background: #f8faff;
@@ -175,6 +212,20 @@ fieldset input[type="text"]:hover {
 
 /* Responsive layout for narrow screens */
 @media (max-width: 768px) {
+  .results-side-menu {
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    transform: none;
+    flex-direction: row;
+    padding: 0.4rem;
+  }
+
+  .results-side-link {
+    font-size: 0.68rem;
+    padding: 0.4rem 0.55rem;
+  }
+
   fieldset {
     padding: 1rem;
     gap: 1rem;
