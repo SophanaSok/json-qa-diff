@@ -42,6 +42,31 @@ function sortableHeader(tableName, columnKey, label) {
   return `<th><button type="button" class="sort-header-btn" onclick="toggleTableSort('${tableName}', '${columnKey}')">${label}<span class="sort-indicator">${sortIndicator(tableName, columnKey)}</span></button></th>`;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderChangedFieldsCell(diffRow) {
+  if (diffRow.type !== 'changed') return '—';
+
+  const changedFields = Object.keys(diffRow.changes || {});
+  const previewFields = changedFields.slice(0, 3)
+    .map((field) => `<span class="changed-field-chip">${escapeHtml(field)}</span>`)
+    .join('');
+  const remainingCount = Math.max(0, changedFields.length - 3);
+  const remainingLabel = remainingCount > 0
+    ? `<span class="changed-field-more">+${remainingCount} more</span>`
+    : '';
+  const changedSummaryLabel = `${changedFields.length} field${changedFields.length === 1 ? '' : 's'} changed`;
+
+  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${previewFields}${remainingLabel}</span></summary><pre class="changes-json">${escapeHtml(JSON.stringify(diffRow.changes, null, 2))}</pre></details>`;
+}
+
 function getSortedDiffRows() {
   const diffRows = (state.diffs || []).filter((d) => {
     const typeMatches = tableFilterState.diffType === 'all' || d.type === tableFilterState.diffType;
@@ -111,9 +136,7 @@ function renderDiffTable() {
               <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
               <td>${(d.record.Title || '').slice(0, 60)}${d.record.Title?.length > 60 ? '…' : ''}</td>
               <td>${d.record.BidStatus || '—'}</td>
-              <td>${d.type === 'changed'
-                ? '<details><summary>' + Object.keys(d.changes).join(', ') + '</summary><pre>' + JSON.stringify(d.changes, null, 2) + '</pre></details>'
-                : '—'}</td>
+              <td>${renderChangedFieldsCell(d)}</td>
             </tr>`).join('')}
         </tbody>
       </table>`;

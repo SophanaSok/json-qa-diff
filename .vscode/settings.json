@@ -1,5 +1,9 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "true": true
+        "true": true,
+        "/^cd /workspaces/json-qa-diff && node --check app\\.js$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
