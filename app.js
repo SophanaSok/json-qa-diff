@@ -10,6 +10,16 @@ const tableFilterState = {
   diffType: 'all',
   changedField: 'all'
 };
+const changesModalViewState = {
+  plainLines: [],
+  sectionMap: new Map(),
+  collapsedSections: new Set(),
+  searchMatches: [],
+  activeMatchIndex: -1,
+  wrapEnabled: false,
+  fontStep: 0,
+  activeLine: null
+};
 
 function normalizeSortValue(value) {
   if (value === null || value === undefined) return '';
@@ -93,6 +103,346 @@ function stringifyDiffValueRaw(value) {
   if (beautified !== null) return beautified;
   const serialized = JSON.stringify(value, null, 2);
   return serialized === undefined ? 'undefined' : serialized;
+}
+
+function tokenizeJsonFragment(fragment) {
+  const tokenRegex = /"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b|[{}\[\]:,]/g;
+  let result = '';
+  let cursor = 0;
+  let match;
+
+  while ((match = tokenRegex.exec(fragment)) !== null) {
+    const start = match.index;
+    if (start > cursor) {
+      result += escapeHtml(fragment.slice(cursor, start));
+    }
+
+    const token = match[0];
+    let cls = 'json-punct';
+    if (token.startsWith('"')) cls = 'json-value-string';
+    else if (/^-?\d/.test(token)) cls = 'json-value-number';
+    else if (/^(true|false|null)$/i.test(token)) cls = 'json-value-keyword';
+
+    result += `<span class="${cls}">${escapeHtml(token)}</span>`;
+    cursor = start + token.length;
+  }
+
+  if (cursor < fragment.length) {
+    result += escapeHtml(fragment.slice(cursor));
+  }
+
+  return result;
+}
+
+function toIndentDepth(text) {
+  const leadingSpaces = (text.match(/^\s*/) || [''])[0].length;
+  return Math.floor(leadingSpaces / 2);
+}
+
+function buildSourceValueLineParts(label, value, sourceClass, trailingComma = false) {
+  const rawValue = stringifyDiffValueRaw(value);
+  const valueLines = rawValue.split('\n');
+  const labelHtml = `<span class="json-key">&quot;${label}&quot;</span><span class="json-punct">:</span>`;
+  const labelText = `"${label}":`;
+
+  if (valueLines.length === 1) {
+    const commaHtml = trailingComma ? '<span class="json-punct">,</span>' : '';
+    const commaText = trailingComma ? ',' : '';
+    return [{
+      html: `    ${labelHtml} <span class="change-value ${sourceClass}">${tokenizeJsonFragment(valueLines[0])}</span>${commaHtml}`,
+      text: `    ${labelText} ${valueLines[0]}${commaText}`
+    }];
+  }
+
+  const parts = [{ html: `    ${labelHtml}`, text: `    ${labelText}` }];
+  valueLines.forEach((line, index) => {
+    const isLast = index === valueLines.length - 1;
+    const commaHtml = trailingComma && isLast ? '<span class="json-punct">,</span>' : '';
+    const commaText = trailingComma && isLast ? ',' : '';
+    parts.push({
+      html: `      <span class="change-value ${sourceClass}">${tokenizeJsonFragment(line)}</span>${commaHtml}`,
+      text: `      ${line}${commaText}`
+    });
+  });
+
+  return parts;
+}
+
+function buildChangesModalEditorModel(diffRow) {
+  const changedFields = Object.keys(diffRow?.changes || {}).sort((a, b) => a.localeCompare(b));
+  const lines = [];
+  const sectionMap = new Map();
+
+  const pushLine = (line) => {
+    lines.push({
+      html: line.html,
+      text: line.text,
+      sectionId: line.sectionId || null,
+      depth: toIndentDepth(line.text)
+    });
+  };
+
+  pushLine({ html: '<span class="json-punct">{</span>', text: '{' });
+
+  changedFields.forEach((field, index) => {
+    const sectionId = `field-${index}`;
+    const change = diffRow.changes[field] || {};
+    const startLine = lines.length + 1;
+    const hasTrailingComma = index < changedFields.length - 1;
+
+    pushLine({
+      html: `  <button type="button" class="json-fold-btn" data-fold-id="${sectionId}" aria-label="Collapse ${escapeHtml(field)} block" title="Collapse/expand block">▾</button><span class="json-key">&quot;${escapeHtml(field)}&quot;</span><span class="json-punct">:</span> <span class="json-punct">{</span><span class="json-fold-summary" hidden></span>`,
+      text: `  "${field}": {`,
+      sectionId
+    });
+
+    buildSourceValueLineParts('from', change.from, 'change-value-file1', true)
+      .forEach((part) => pushLine({ ...part, sectionId }));
+    buildSourceValueLineParts('to', change.to, 'change-value-file2', false)
+      .forEach((part) => pushLine({ ...part, sectionId }));
+
+    pushLine({
+      html: `  <span class="json-punct">}${hasTrailingComma ? ',' : ''}</span>`,
+      text: `  }${hasTrailingComma ? ',' : ''}`,
+      sectionId
+    });
+
+    sectionMap.set(sectionId, {
+      sectionId,
+      field,
+      startLine,
+      endLine: lines.length,
+      hiddenLineCount: Math.max(lines.length - startLine, 0)
+    });
+  });
+
+  pushLine({ html: '<span class="json-punct">}</span>', text: '}' });
+
+  return { lines, sectionMap };
+}
+
+function setModalSearchCountText(active, total) {
+  const countEl = document.getElementById('changesModalSearchCount');
+  if (!countEl) return;
+  countEl.textContent = `${active} / ${total}`;
+}
+
+function renderChangesModalEditor(diffRow) {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl) return;
+
+  const model = buildChangesModalEditorModel(diffRow);
+  changesModalViewState.plainLines = model.lines.map((line) => line.text);
+  changesModalViewState.sectionMap = model.sectionMap;
+  changesModalViewState.collapsedSections = new Set();
+  changesModalViewState.searchMatches = [];
+  changesModalViewState.activeMatchIndex = -1;
+  changesModalViewState.activeLine = null;
+
+  jsonEl.innerHTML = model.lines
+    .map((line, index) => `
+      <div class="json-line" data-line-number="${index + 1}" data-indent-depth="${line.depth}"${line.sectionId ? ` data-section-id="${line.sectionId}"` : ''}>
+        <span class="json-gutter">${index + 1}</span>
+        <span class="json-code">${line.html || '&nbsp;'}</span>
+      </div>`)
+    .join('');
+
+  jsonEl.querySelectorAll('.json-line').forEach((lineEl) => {
+    lineEl.addEventListener('click', () => {
+      jsonEl.querySelector('.json-line.is-active')?.classList.remove('is-active');
+      lineEl.classList.add('is-active');
+      changesModalViewState.activeLine = Number(lineEl.dataset.lineNumber);
+    });
+  });
+
+  jsonEl.querySelectorAll('.json-fold-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const sectionId = button.dataset.foldId;
+      if (!sectionId) return;
+      toggleChangesModalSection(sectionId);
+    });
+  });
+
+  applyChangesModalWrapState();
+  applyChangesModalFontSize();
+  const searchInput = document.getElementById('changesModalSearch');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  setModalSearchCountText(0, 0);
+}
+
+function applyChangesModalWrapState() {
+  const jsonEl = document.getElementById('changesModalJson');
+  const wrapBtn = document.getElementById('changesModalWrapToggle');
+  if (!jsonEl || !wrapBtn) return;
+
+  jsonEl.classList.toggle('is-wrapped', changesModalViewState.wrapEnabled);
+  wrapBtn.textContent = `Wrap: ${changesModalViewState.wrapEnabled ? 'On' : 'Off'}`;
+  wrapBtn.setAttribute('aria-pressed', changesModalViewState.wrapEnabled ? 'true' : 'false');
+}
+
+function applyChangesModalFontSize() {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl) return;
+
+  const sizes = ['is-font-small', 'is-font-normal', 'is-font-large'];
+  jsonEl.classList.remove(...sizes);
+  if (changesModalViewState.fontStep <= -1) {
+    jsonEl.classList.add('is-font-small');
+  } else if (changesModalViewState.fontStep >= 1) {
+    jsonEl.classList.add('is-font-large');
+  } else {
+    jsonEl.classList.add('is-font-normal');
+  }
+}
+
+function toggleChangesModalSection(sectionId, collapseExplicit = null) {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl) return;
+
+  const section = changesModalViewState.sectionMap.get(sectionId);
+  if (!section) return;
+
+  const isCollapsed = changesModalViewState.collapsedSections.has(sectionId);
+  const shouldCollapse = collapseExplicit === null ? !isCollapsed : collapseExplicit;
+
+  if (shouldCollapse) {
+    changesModalViewState.collapsedSections.add(sectionId);
+  } else {
+    changesModalViewState.collapsedSections.delete(sectionId);
+  }
+
+  const rowEls = [...jsonEl.querySelectorAll(`.json-line[data-section-id="${sectionId}"]`)];
+  rowEls.forEach((rowEl) => {
+    const lineNumber = Number(rowEl.dataset.lineNumber);
+    if (lineNumber > section.startLine) {
+      rowEl.classList.toggle('is-fold-hidden', shouldCollapse);
+    }
+  });
+
+  const startRow = jsonEl.querySelector(`.json-line[data-line-number="${section.startLine}"]`);
+  if (!startRow) return;
+
+  startRow.classList.toggle('is-fold-collapsed', shouldCollapse);
+  const foldBtn = startRow.querySelector('.json-fold-btn');
+  const foldSummary = startRow.querySelector('.json-fold-summary');
+  if (foldBtn) {
+    foldBtn.textContent = shouldCollapse ? '▸' : '▾';
+    foldBtn.setAttribute('aria-label', `${shouldCollapse ? 'Expand' : 'Collapse'} ${section.field} block`);
+  }
+  if (foldSummary) {
+    if (shouldCollapse) {
+      foldSummary.hidden = false;
+      foldSummary.textContent = ` // ... ${section.hiddenLineCount} line${section.hiddenLineCount === 1 ? '' : 's'}`;
+    } else {
+      foldSummary.hidden = true;
+      foldSummary.textContent = '';
+    }
+  }
+
+  runChangesModalSearch();
+}
+
+function setAllChangesModalSectionsCollapsed(collapse) {
+  for (const sectionId of changesModalViewState.sectionMap.keys()) {
+    toggleChangesModalSection(sectionId, collapse);
+  }
+}
+
+function runChangesModalSearch() {
+  const jsonEl = document.getElementById('changesModalJson');
+  const searchInput = document.getElementById('changesModalSearch');
+  if (!jsonEl || !searchInput) return;
+
+  const query = searchInput.value.trim().toLowerCase();
+  changesModalViewState.searchMatches = [];
+  changesModalViewState.activeMatchIndex = -1;
+
+  jsonEl.querySelectorAll('.json-line').forEach((rowEl) => {
+    rowEl.classList.remove('json-line-search-hit', 'json-line-search-active');
+    if (!query) return;
+
+    const lineNumber = Number(rowEl.dataset.lineNumber);
+    const lineText = (changesModalViewState.plainLines[lineNumber - 1] || '').toLowerCase();
+    if (!lineText.includes(query)) return;
+    if (rowEl.classList.contains('is-fold-hidden')) return;
+
+    rowEl.classList.add('json-line-search-hit');
+    changesModalViewState.searchMatches.push(lineNumber);
+  });
+
+  if (!query || changesModalViewState.searchMatches.length === 0) {
+    setModalSearchCountText(0, changesModalViewState.searchMatches.length);
+    return;
+  }
+
+  changesModalViewState.activeMatchIndex = 0;
+  focusChangesModalSearchMatch();
+}
+
+function focusChangesModalSearchMatch() {
+  const jsonEl = document.getElementById('changesModalJson');
+  if (!jsonEl) return;
+
+  jsonEl.querySelectorAll('.json-line-search-active').forEach((line) => line.classList.remove('json-line-search-active'));
+
+  const total = changesModalViewState.searchMatches.length;
+  if (total === 0 || changesModalViewState.activeMatchIndex < 0) {
+    setModalSearchCountText(0, total);
+    return;
+  }
+
+  const lineNumber = changesModalViewState.searchMatches[changesModalViewState.activeMatchIndex];
+  const lineEl = jsonEl.querySelector(`.json-line[data-line-number="${lineNumber}"]`);
+  if (!lineEl) {
+    setModalSearchCountText(0, total);
+    return;
+  }
+
+  lineEl.classList.add('json-line-search-active');
+  lineEl.scrollIntoView({ block: 'center', inline: 'nearest' });
+  setModalSearchCountText(changesModalViewState.activeMatchIndex + 1, total);
+}
+
+function stepChangesModalSearch(direction) {
+  const total = changesModalViewState.searchMatches.length;
+  if (total === 0) return;
+
+  const next = (changesModalViewState.activeMatchIndex + direction + total) % total;
+  changesModalViewState.activeMatchIndex = next;
+  focusChangesModalSearchMatch();
+}
+
+async function copyChangesModalJson() {
+  const text = changesModalViewState.plainLines.join('\n');
+  if (!text) return;
+
+  const copyButton = document.getElementById('changesModalCopy');
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const fallback = document.createElement('textarea');
+      fallback.value = text;
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand('copy');
+      fallback.remove();
+    }
+
+    if (copyButton) {
+      const previous = copyButton.textContent;
+      copyButton.textContent = 'Copied';
+      setTimeout(() => { copyButton.textContent = previous || 'Copy JSON'; }, 1200);
+    }
+  } catch (_) {
+    if (copyButton) {
+      const previous = copyButton.textContent;
+      copyButton.textContent = 'Copy failed';
+      setTimeout(() => { copyButton.textContent = previous || 'Copy JSON'; }, 1600);
+    }
+  }
 }
 
 function renderSourceValueLine(label, value, sourceClass, trailingComma = false) {
@@ -182,7 +532,7 @@ function openChangesModalByKey(encodedKey) {
 
   const changedFieldCount = Object.keys(row.changes || {}).length;
   meta.textContent = `${row.key} • ${changedFieldCount} changed field${changedFieldCount === 1 ? '' : 's'}`;
-  jsonEl.innerHTML = buildBeautifiedModalChangesJson(row);
+  renderChangesModalEditor(row);
 
   modal.classList.remove('hidden');
   document.body.classList.add('modal-open');
@@ -197,10 +547,52 @@ function closeChangesModal() {
 }
 
 function initChangesModalBindings() {
+  const searchInput = document.getElementById('changesModalSearch');
+  const searchPrev = document.getElementById('changesModalSearchPrev');
+  const searchNext = document.getElementById('changesModalSearchNext');
+  const copyButton = document.getElementById('changesModalCopy');
+  const wrapButton = document.getElementById('changesModalWrapToggle');
+  const fontDown = document.getElementById('changesModalFontDown');
+  const fontUp = document.getElementById('changesModalFontUp');
+  const collapseAll = document.getElementById('changesModalCollapseAll');
+  const expandAll = document.getElementById('changesModalExpandAll');
+
+  searchInput?.addEventListener('input', runChangesModalSearch);
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    stepChangesModalSearch(event.shiftKey ? -1 : 1);
+  });
+  searchPrev?.addEventListener('click', () => stepChangesModalSearch(-1));
+  searchNext?.addEventListener('click', () => stepChangesModalSearch(1));
+  copyButton?.addEventListener('click', copyChangesModalJson);
+  wrapButton?.addEventListener('click', () => {
+    changesModalViewState.wrapEnabled = !changesModalViewState.wrapEnabled;
+    applyChangesModalWrapState();
+  });
+  fontDown?.addEventListener('click', () => {
+    changesModalViewState.fontStep = Math.max(-1, changesModalViewState.fontStep - 1);
+    applyChangesModalFontSize();
+  });
+  fontUp?.addEventListener('click', () => {
+    changesModalViewState.fontStep = Math.min(1, changesModalViewState.fontStep + 1);
+    applyChangesModalFontSize();
+  });
+  collapseAll?.addEventListener('click', () => setAllChangesModalSectionsCollapsed(true));
+  expandAll?.addEventListener('click', () => setAllChangesModalSectionsCollapsed(false));
+
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
     const modal = document.getElementById('changesModal');
     if (!modal || modal.classList.contains('hidden')) return;
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+      event.preventDefault();
+      searchInput?.focus();
+      searchInput?.select();
+      return;
+    }
+
+    if (event.key !== 'Escape') return;
     closeChangesModal();
   });
 }
