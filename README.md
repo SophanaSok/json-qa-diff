@@ -27,26 +27,6 @@
 - Run **Analyze** before downloading artifacts.
 - If you change files or settings after analysis, run **Analyze** again to refresh metrics/export projections.
 
-## 📚 In-Depth Guide
-
-Use these sections for detailed behavior, formulas, and interpretation guidance:
-
-- [JSON input expectations](#json-input-expectations)
-- [Diffing behavior](#diffing-behavior)
-- [Duplicate behavior](#duplicate-behavior)
-- [Clean changed/new export behavior](#clean-changednew-export-behavior)
-- [Summary dashboard breakdown](#summary-dashboard-breakdown)
-- [Outputs](#outputs)
-- [Options](#options)
-- [Results Navigation UX](#results-navigation-ux)
-- [Best practices](#best-practices)
-- [Privacy](#privacy)
-
-- Runs fully in the browser (zero backend)
-- Upload two JSON files and compute diff + duplicate insights
-- Supports configurable key and ignore-field settings
-- Download reports as JSON (diffs, duplicate scopes, clean changed/new export)
-
 ## 🔍 Purpose
 
 1. Reconcile exports from different systems (bid, asset, contract, inventory)
