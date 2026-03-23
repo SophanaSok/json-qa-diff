@@ -93,11 +93,6 @@ function beautifyArrayOfObjects(value) {
   return `[\n${items.join(',\n')}\n  ]`;
 }
 
-function stringifyDiffValue(value) {
-  const serialized = value === undefined ? 'undefined' : JSON.stringify(value, null, 2);
-  return escapeHtml(serialized === undefined ? 'undefined' : serialized);
-}
-
 function stringifyDiffValueRaw(value) {
   if (value === undefined) return 'undefined';
   const beautified = beautifyArrayOfObjects(value);
@@ -140,30 +135,58 @@ function toIndentDepth(text) {
   return Math.floor(leadingSpaces / 2);
 }
 
-function buildSourceValueLineParts(label, value, sourceClass, trailingComma = false) {
+function buildSourceValueLineParts(label, value, sourceClass, trailingComma = false, options = {}) {
+  const {
+    labelMode = 'json-spans',
+    valueMode = 'tokenized',
+    multilineMode = 'split-lines',
+    includeText = true
+  } = options;
   const rawValue = stringifyDiffValueRaw(value);
   const valueLines = rawValue.split('\n');
-  const labelHtml = `<span class="json-key">&quot;${label}&quot;</span><span class="json-punct">:</span>`;
+  const labelHtml = labelMode === 'entities'
+    ? `&quot;${label}&quot;:`
+    : `<span class="json-key">&quot;${label}&quot;</span><span class="json-punct">:</span>`;
   const labelText = `"${label}":`;
+  const renderValueLine = (line) => (valueMode === 'escaped' ? escapeHtml(line) : tokenizeJsonFragment(line));
 
   if (valueLines.length === 1) {
     const commaHtml = trailingComma ? '<span class="json-punct">,</span>' : '';
     const commaText = trailingComma ? ',' : '';
-    return [{
-      html: `    ${labelHtml} <span class="change-value ${sourceClass}">${tokenizeJsonFragment(valueLines[0])}</span>${commaHtml}`,
-      text: `    ${labelText} ${valueLines[0]}${commaText}`
-    }];
+    const line = {
+      html: `    ${labelHtml} <span class="change-value ${sourceClass}">${renderValueLine(valueLines[0])}</span>${commaHtml}`
+    };
+    if (includeText) line.text = `    ${labelText} ${valueLines[0]}${commaText}`;
+    return [line];
   }
 
-  const parts = [{ html: `    ${labelHtml}`, text: `    ${labelText}` }];
+  if (multilineMode === 'block') {
+    const comma = trailingComma ? ',' : '';
+    const blockValue = renderValueLine(rawValue)
+      .split('\n')
+      .map((line, index) => (index === 0 ? line : `      ${line}`))
+      .join('\n');
+
+    const blockLine = {
+      html: `    ${labelHtml}\n      <span class="change-value ${sourceClass} change-value-multiline">${blockValue}</span>${comma}`
+    };
+    if (includeText) {
+      blockLine.text = `    ${labelText} ${rawValue}${comma}`;
+    }
+    return [blockLine];
+  }
+
+  const parts = [{ html: `    ${labelHtml}` }];
+  if (includeText) parts[0].text = `    ${labelText}`;
   valueLines.forEach((line, index) => {
     const isLast = index === valueLines.length - 1;
     const commaHtml = trailingComma && isLast ? '<span class="json-punct">,</span>' : '';
     const commaText = trailingComma && isLast ? ',' : '';
-    parts.push({
-      html: `      <span class="change-value ${sourceClass}">${tokenizeJsonFragment(line)}</span>${commaHtml}`,
-      text: `      ${line}${commaText}`
-    });
+    const part = {
+      html: `      <span class="change-value ${sourceClass}">${renderValueLine(line)}</span>${commaHtml}`
+    };
+    if (includeText) part.text = `      ${line}${commaText}`;
+    parts.push(part);
   });
 
   return parts;
@@ -534,33 +557,12 @@ async function copyChangesModalJson() {
 }
 
 function renderSourceValueLine(label, value, sourceClass, trailingComma = false) {
-  const rawValue = stringifyDiffValueRaw(value);
-  const escapedValue = escapeHtml(rawValue);
-  const comma = trailingComma ? ',' : '';
-
-  if (!rawValue.includes('\n')) {
-    return `    &quot;${label}&quot;: <span class="change-value ${sourceClass}">${escapedValue}</span>${comma}`;
-  }
-
-  const indentedMultilineValue = escapedValue
-    .split('\n')
-    .map((line, index) => (index === 0 ? line : `      ${line}`))
-    .join('\n');
-
-  return `    &quot;${label}&quot;:\n      <span class="change-value ${sourceClass} change-value-multiline">${indentedMultilineValue}</span>${comma}`;
-}
-
-function buildHighlightedChangesJson(diffRow) {
-  const changedFields = Object.keys(diffRow?.changes || {});
-  const highlightedChanges = changedFields
-    .map((field) => {
-      const fromValue = stringifyDiffValue(diffRow.changes[field]?.from);
-      const toValue = stringifyDiffValue(diffRow.changes[field]?.to);
-      return `  &quot;${escapeHtml(field)}&quot;: {\n    &quot;from&quot;: <span class="change-value change-value-file1">${fromValue}</span>,\n    &quot;to&quot;: <span class="change-value change-value-file2">${toValue}</span>\n  }`;
-    })
-    .join(',\n');
-
-  return `{\n${highlightedChanges}\n}`;
+  return buildSourceValueLineParts(label, value, sourceClass, trailingComma, {
+    labelMode: 'entities',
+    valueMode: 'escaped',
+    multilineMode: 'block',
+    includeText: false
+  }).map((part) => part.html).join('\n');
 }
 
 function syntaxHighlightJson(jsonHtml) {

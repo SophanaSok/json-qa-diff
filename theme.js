@@ -4,7 +4,6 @@ const JSON_QA_THEME_MODES = ['system', 'dark', 'light'];
 function resolveThemeMode() {
   const storedTheme = localStorage.getItem(JSON_QA_THEME_STORAGE_KEY);
   if (JSON_QA_THEME_MODES.includes(storedTheme)) return storedTheme;
-  if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
   return 'system';
 }
 
