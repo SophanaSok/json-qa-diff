@@ -48,8 +48,8 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 |---|---|
 | Summary | Quick snapshot of added, removed, changed, and duplicate counts |
 | Results Side Nav | Jump quickly between Summary, Diff Records, and Duplicate Records |
-| Diff Records | Filter and review record-level changes |
-| Duplicate Records | Review duplicates within a file and across files |
+| Diff Records | Filter, sort, and page through record-level changes |
+| Duplicate Records | Review duplicates within a file and across files with paging |
 | Exports | Download diff, duplicate, and clean changed/new JSON files |
 
 ### Common tasks
@@ -113,7 +113,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 
 ### Changed JSON readability tools
 
-- Expand inline changed JSON in Diff Records
+- Expand inline changed JSON in Diff Records (rendered on demand when expanded)
 - Resize the inline JSON panel
 - Use Maximize JSON for a larger, dense code-view modal
 - See File 1 (`from`) and File 2 (`to`) highlights
@@ -134,6 +134,8 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Re-run Analyze because metrics and exports depend on the last analysis.
 - Long values in changed JSON are hard to read:
   - Open Maximize JSON; text wrapping is enabled in the modal.
+- Browser tab feels sluggish with very large files:
+  - Results tables are paged and inline changed JSON is lazy-rendered; expand only rows you need and use modal view for deep inspection.
 
 ### Good defaults for first-time users
 
@@ -182,7 +184,9 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - Summary dashboard with counts + mismatch warnings
 - Field-level change details with before/after values
 - Sortable columns in Diff Records and Duplicate Records tables
+- Pagination controls for Diff Records and Duplicate Records tables
 - Diff type and changed-field filters with live updates
+- Large-dataset responsiveness safeguards (lazy inline changed-JSON rendering + cooperative yielding during heavy loops)
 - Changed JSON UX enhancements:
   - Source legend chips (File 1 `from`, File 2 `to`)
   - Source value highlighting
@@ -408,6 +412,7 @@ Additional clean-export metric:
 - Side menu appears after Analyze with links to Summary, Diff, and Duplicate sections.
 - Active link tracks the section nearest the sticky-header reading position while scrolling.
 - Smooth anchor scrolling with reduced-motion fallback.
+- Diff and Duplicate tables render in pages (default 200 rows per page) with Prev/Next controls.
 
 ## Best Practices
 
@@ -433,6 +438,7 @@ Additional clean-export metric:
 - Removed modal editor-style controls (search/navigation, wrap toggle, font controls, fold controls).
 - Kept syntax highlighting, source-change highlighting, line numbers, copy action, and `Esc` close.
 - Updated modal styling to be more VS Code-like and enabled wrapped modal text.
+- Improved large-load stability by adding table pagination, lazy inline changed-JSON rendering, reduced cloning in analysis, and cooperative yielding during heavy loops.
 
 ### 2026-03-22
 
