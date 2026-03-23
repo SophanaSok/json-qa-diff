@@ -11,6 +11,10 @@
   --table-head-bg: #eaf0f7;
   --table-row-alt: #f7fafe;
   --table-row-hover: #e6f0ff;
+  --theme-toggle-border: var(--border);
+  --theme-toggle-bg: var(--page-bg);
+  --theme-toggle-text: var(--text);
+  --theme-toggle-hover-bg: color-mix(in srgb, var(--page-bg) 75%, var(--text) 25%);
 }
 
 html[data-theme='dark'] {
@@ -80,19 +84,7 @@ body {
   font-weight: 600;
 }
 
-.theme-toggle {
-  padding: 7px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--page-bg);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.home-link:hover,
-.theme-toggle:hover {
+.home-link:hover {
   background: color-mix(in srgb, var(--page-bg) 75%, var(--text) 25%);
 }
 

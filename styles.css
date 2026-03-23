@@ -813,6 +813,14 @@ html[data-theme='dark'] body {
   color: #d1d5db;
 }
 
+html[data-theme='dark'] {
+  --theme-toggle-border: #334155;
+  --theme-toggle-hover-border: #38bdf8;
+  --theme-toggle-bg: #0f172a;
+  --theme-toggle-text: #e2e8f0;
+  --theme-toggle-hover-bg: #1e293b;
+}
+
 html[data-theme='dark'] .bg-white {
   background-color: #111827 !important;
 }
@@ -902,8 +910,7 @@ html[data-theme='dark'] .changes-json-shortcuts-label {
 html[data-theme='dark'] .changes-json-toolbar-btn,
 html[data-theme='dark'] .changes-modal-close,
 html[data-theme='dark'] .changes-expand-btn,
-html[data-theme='dark'] .json-fold-btn,
-html[data-theme='dark'] .theme-toggle {
+html[data-theme='dark'] .json-fold-btn {
   background: #0f172a;
   color: #e2e8f0;
   border-color: #334155;
@@ -916,9 +923,7 @@ html[data-theme='dark'] .changes-modal-close:focus-visible,
 html[data-theme='dark'] .changes-expand-btn:hover,
 html[data-theme='dark'] .changes-expand-btn:focus-visible,
 html[data-theme='dark'] .json-fold-btn:hover,
-html[data-theme='dark'] .json-fold-btn:focus-visible,
-html[data-theme='dark'] .theme-toggle:hover,
-html[data-theme='dark'] .theme-toggle:focus-visible {
+html[data-theme='dark'] .json-fold-btn:focus-visible {
   background: #1e293b;
   border-color: #38bdf8;
 }

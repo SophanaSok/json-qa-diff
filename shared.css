@@ -1,9 +1,19 @@
 :root {
   color-scheme: light;
+  --theme-toggle-border: #d1d5db;
+  --theme-toggle-hover-border: var(--theme-toggle-border);
+  --theme-toggle-bg: #ffffff;
+  --theme-toggle-text: #374151;
+  --theme-toggle-hover-bg: #f9fafb;
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
+  --theme-toggle-border: #475569;
+  --theme-toggle-hover-border: var(--theme-toggle-border);
+  --theme-toggle-bg: #0f172a;
+  --theme-toggle-text: #e2e8f0;
+  --theme-toggle-hover-bg: #1e293b;
 }
 
 .theme-toggle {
@@ -11,6 +21,20 @@ html[data-theme='dark'] {
   align-items: center;
   gap: 0.5rem;
   justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--theme-toggle-border);
+  border-radius: 0.5rem;
+  background: var(--theme-toggle-bg);
+  color: var(--theme-toggle-text);
+  text-decoration: none;
+  font-size: 0.8125rem;
   min-width: 8.75rem;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  background: var(--theme-toggle-hover-bg);
+  border-color: var(--theme-toggle-hover-border);
 }
