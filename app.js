@@ -12,14 +12,7 @@ const tableFilterState = {
 };
 const changesModalViewState = {
   plainLines: [],
-  htmlLines: [],
-  sectionMap: new Map(),
-  collapsedSections: new Set(),
-  searchMatches: [],
-  activeMatchIndex: -1,
-  wrapEnabled: true,
-  fontStep: 0,
-  activeLine: null
+  htmlLines: []
 };
 
 function normalizeSortValue(value) {
@@ -195,13 +188,11 @@ function buildSourceValueLineParts(label, value, sourceClass, trailingComma = fa
 function buildChangesModalEditorModel(diffRow) {
   const changedFields = Object.keys(diffRow?.changes || {}).sort((a, b) => a.localeCompare(b));
   const lines = [];
-  const sectionMap = new Map();
 
   const pushLine = (line) => {
     lines.push({
       html: line.html,
       text: line.text,
-      sectionId: line.sectionId || null,
       depth: toIndentDepth(line.text)
     });
   };
@@ -209,46 +200,28 @@ function buildChangesModalEditorModel(diffRow) {
   pushLine({ html: '<span class="json-punct">{</span>', text: '{' });
 
   changedFields.forEach((field, index) => {
-    const sectionId = `field-${index}`;
     const change = diffRow.changes[field] || {};
-    const startLine = lines.length + 1;
     const hasTrailingComma = index < changedFields.length - 1;
 
     pushLine({
-      html: `  <button type="button" class="json-fold-btn" data-fold-id="${sectionId}" aria-label="Collapse ${escapeHtml(field)} block" title="Collapse/expand block">▾</button><span class="json-key">&quot;${escapeHtml(field)}&quot;</span><span class="json-punct">:</span> <span class="json-punct">{</span><span class="json-fold-summary" hidden></span>`,
-      text: `  "${field}": {`,
-      sectionId
+      html: `  <span class="json-key">&quot;${escapeHtml(field)}&quot;</span><span class="json-punct">:</span> <span class="json-punct">{</span>`,
+      text: `  "${field}": {`
     });
 
     buildSourceValueLineParts('from', change.from, 'change-value-file1', true)
-      .forEach((part) => pushLine({ ...part, sectionId }));
+      .forEach((part) => pushLine(part));
     buildSourceValueLineParts('to', change.to, 'change-value-file2', false)
-      .forEach((part) => pushLine({ ...part, sectionId }));
+      .forEach((part) => pushLine(part));
 
     pushLine({
       html: `  <span class="json-punct">}${hasTrailingComma ? ',' : ''}</span>`,
-      text: `  }${hasTrailingComma ? ',' : ''}`,
-      sectionId
-    });
-
-    sectionMap.set(sectionId, {
-      sectionId,
-      field,
-      startLine,
-      endLine: lines.length,
-      hiddenLineCount: Math.max(lines.length - startLine, 0)
+      text: `  }${hasTrailingComma ? ',' : ''}`
     });
   });
 
   pushLine({ html: '<span class="json-punct">}</span>', text: '}' });
 
-  return { lines, sectionMap };
-}
-
-function setModalSearchCountText(active, total) {
-  const countEl = document.getElementById('changesModalSearchCount');
-  if (!countEl) return;
-  countEl.textContent = `${active} / ${total}`;
+  return { lines };
 }
 
 function renderChangesModalEditor(diffRow) {
@@ -258,271 +231,14 @@ function renderChangesModalEditor(diffRow) {
   const model = buildChangesModalEditorModel(diffRow);
   changesModalViewState.plainLines = model.lines.map((line) => line.text);
   changesModalViewState.htmlLines = model.lines.map((line) => line.html || '&nbsp;');
-  changesModalViewState.sectionMap = model.sectionMap;
-  changesModalViewState.collapsedSections = new Set();
-  changesModalViewState.searchMatches = [];
-  changesModalViewState.activeMatchIndex = -1;
-  changesModalViewState.activeLine = null;
 
   jsonEl.innerHTML = model.lines
     .map((line, index) => `
-      <div class="json-line" data-line-number="${index + 1}" data-indent-depth="${line.depth}"${line.sectionId ? ` data-section-id="${line.sectionId}"` : ''}>
+      <div class="json-line" data-line-number="${index + 1}" data-indent-depth="${line.depth}">
         <span class="json-gutter">${index + 1}</span>
         <span class="json-code">${line.html || '&nbsp;'}</span>
       </div>`)
     .join('');
-
-  jsonEl.querySelectorAll('.json-line').forEach((lineEl) => {
-    lineEl.addEventListener('click', () => {
-      jsonEl.querySelector('.json-line.is-active')?.classList.remove('is-active');
-      lineEl.classList.add('is-active');
-      changesModalViewState.activeLine = Number(lineEl.dataset.lineNumber);
-    });
-  });
-
-  jsonEl.querySelectorAll('.json-fold-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const sectionId = button.dataset.foldId;
-      if (!sectionId) return;
-      toggleChangesModalSection(sectionId);
-    });
-  });
-
-  applyChangesModalWrapState();
-  applyChangesModalFontSize();
-  const searchInput = document.getElementById('changesModalSearch');
-  if (searchInput) {
-    searchInput.value = '';
-  }
-  setModalSearchCountText(0, 0);
-}
-
-function clearJsonTokenMatchHighlights(container) {
-  if (!container) return;
-  container.querySelectorAll('mark.json-token-match').forEach((markEl) => {
-    const parent = markEl.parentNode;
-    if (!parent) return;
-    parent.replaceChild(document.createTextNode(markEl.textContent || ''), markEl);
-    parent.normalize();
-  });
-}
-
-function highlightQueryInLineCode(codeEl, queryLower) {
-  if (!codeEl || !queryLower) return;
-
-  const textNodes = [];
-  const walker = document.createTreeWalker(codeEl, NodeFilter.SHOW_TEXT);
-  while (walker.nextNode()) {
-    const node = walker.currentNode;
-    if (node?.nodeValue) textNodes.push(node);
-  }
-
-  textNodes.forEach((textNode) => {
-    const raw = textNode.nodeValue || '';
-    const haystack = raw.toLowerCase();
-    let fromIndex = 0;
-    let idx = haystack.indexOf(queryLower, fromIndex);
-    if (idx === -1) return;
-
-    const fragment = document.createDocumentFragment();
-    while (idx !== -1) {
-      if (idx > fromIndex) {
-        fragment.appendChild(document.createTextNode(raw.slice(fromIndex, idx)));
-      }
-
-      const end = idx + queryLower.length;
-      const mark = document.createElement('mark');
-      mark.className = 'json-token-match';
-      mark.textContent = raw.slice(idx, end);
-      fragment.appendChild(mark);
-
-      fromIndex = end;
-      idx = haystack.indexOf(queryLower, fromIndex);
-    }
-
-    if (fromIndex < raw.length) {
-      fragment.appendChild(document.createTextNode(raw.slice(fromIndex)));
-    }
-
-    textNode.parentNode?.replaceChild(fragment, textNode);
-  });
-}
-
-function applyChangesModalWrapState() {
-  const jsonEl = document.getElementById('changesModalJson');
-  const wrapBtn = document.getElementById('changesModalWrapToggle');
-  if (!jsonEl || !wrapBtn) return;
-
-  jsonEl.classList.toggle('is-wrapped', changesModalViewState.wrapEnabled);
-  wrapBtn.textContent = `Wrap: ${changesModalViewState.wrapEnabled ? 'On' : 'Off'}`;
-  wrapBtn.setAttribute('aria-pressed', changesModalViewState.wrapEnabled ? 'true' : 'false');
-}
-
-function applyChangesModalFontSize() {
-  const jsonEl = document.getElementById('changesModalJson');
-  if (!jsonEl) return;
-
-  const sizes = ['is-font-small', 'is-font-normal', 'is-font-large'];
-  jsonEl.classList.remove(...sizes);
-  if (changesModalViewState.fontStep <= -1) {
-    jsonEl.classList.add('is-font-small');
-  } else if (changesModalViewState.fontStep >= 1) {
-    jsonEl.classList.add('is-font-large');
-  } else {
-    jsonEl.classList.add('is-font-normal');
-  }
-}
-
-function toggleChangesModalSection(sectionId, collapseExplicit = null) {
-  const jsonEl = document.getElementById('changesModalJson');
-  if (!jsonEl) return;
-
-  const section = changesModalViewState.sectionMap.get(sectionId);
-  if (!section) return;
-
-  const isCollapsed = changesModalViewState.collapsedSections.has(sectionId);
-  const shouldCollapse = collapseExplicit === null ? !isCollapsed : collapseExplicit;
-
-  if (shouldCollapse) {
-    changesModalViewState.collapsedSections.add(sectionId);
-  } else {
-    changesModalViewState.collapsedSections.delete(sectionId);
-  }
-
-  const rowEls = [...jsonEl.querySelectorAll(`.json-line[data-section-id="${sectionId}"]`)];
-  rowEls.forEach((rowEl) => {
-    const lineNumber = Number(rowEl.dataset.lineNumber);
-    if (lineNumber > section.startLine) {
-      rowEl.classList.toggle('is-fold-hidden', shouldCollapse);
-    }
-  });
-
-  const startRow = jsonEl.querySelector(`.json-line[data-line-number="${section.startLine}"]`);
-  if (!startRow) return;
-
-  startRow.classList.toggle('is-fold-collapsed', shouldCollapse);
-  const foldBtn = startRow.querySelector('.json-fold-btn');
-  const foldSummary = startRow.querySelector('.json-fold-summary');
-  if (foldBtn) {
-    foldBtn.textContent = shouldCollapse ? '▸' : '▾';
-    foldBtn.setAttribute('aria-label', `${shouldCollapse ? 'Expand' : 'Collapse'} ${section.field} block`);
-  }
-  if (foldSummary) {
-    if (shouldCollapse) {
-      foldSummary.hidden = false;
-      foldSummary.textContent = ` // ... ${section.hiddenLineCount} line${section.hiddenLineCount === 1 ? '' : 's'}`;
-    } else {
-      foldSummary.hidden = true;
-      foldSummary.textContent = '';
-    }
-  }
-
-  runChangesModalSearch();
-}
-
-function setAllChangesModalSectionsCollapsed(collapse) {
-  for (const sectionId of changesModalViewState.sectionMap.keys()) {
-    toggleChangesModalSection(sectionId, collapse);
-  }
-}
-
-function runChangesModalSearch() {
-  const jsonEl = document.getElementById('changesModalJson');
-  const searchInput = document.getElementById('changesModalSearch');
-  if (!jsonEl || !searchInput) return;
-
-  const query = searchInput.value.trim().toLowerCase();
-  changesModalViewState.searchMatches = [];
-  changesModalViewState.activeMatchIndex = -1;
-
-  jsonEl.querySelectorAll('.json-line').forEach((rowEl) => {
-    rowEl.classList.remove('json-line-search-hit', 'json-line-search-active');
-    clearJsonTokenMatchHighlights(rowEl);
-    if (!query) return;
-
-    const lineNumber = Number(rowEl.dataset.lineNumber);
-    const lineText = (changesModalViewState.plainLines[lineNumber - 1] || '').toLowerCase();
-    if (!lineText.includes(query)) return;
-    if (rowEl.classList.contains('is-fold-hidden')) return;
-
-    rowEl.classList.add('json-line-search-hit');
-    highlightQueryInLineCode(rowEl.querySelector('.json-code'), query);
-    changesModalViewState.searchMatches.push(lineNumber);
-  });
-
-  if (!query || changesModalViewState.searchMatches.length === 0) {
-    setModalSearchCountText(0, changesModalViewState.searchMatches.length);
-    return;
-  }
-
-  changesModalViewState.activeMatchIndex = 0;
-  focusChangesModalSearchMatch();
-}
-
-function focusChangesModalSearchMatch() {
-  const jsonEl = document.getElementById('changesModalJson');
-  if (!jsonEl) return;
-
-  jsonEl.querySelectorAll('.json-line-search-active').forEach((line) => line.classList.remove('json-line-search-active'));
-
-  const total = changesModalViewState.searchMatches.length;
-  if (total === 0 || changesModalViewState.activeMatchIndex < 0) {
-    setModalSearchCountText(0, total);
-    return;
-  }
-
-  const lineNumber = changesModalViewState.searchMatches[changesModalViewState.activeMatchIndex];
-  const lineEl = jsonEl.querySelector(`.json-line[data-line-number="${lineNumber}"]`);
-  if (!lineEl) {
-    setModalSearchCountText(0, total);
-    return;
-  }
-
-  lineEl.classList.add('json-line-search-active');
-  lineEl.scrollIntoView({ block: 'center', inline: 'nearest' });
-  setModalSearchCountText(changesModalViewState.activeMatchIndex + 1, total);
-}
-
-function stepChangesModalSearch(direction) {
-  const total = changesModalViewState.searchMatches.length;
-  if (total === 0) return;
-
-  const next = (changesModalViewState.activeMatchIndex + direction + total) % total;
-  changesModalViewState.activeMatchIndex = next;
-  focusChangesModalSearchMatch();
-}
-
-function getVisibleModalLineElements() {
-  const jsonEl = document.getElementById('changesModalJson');
-  if (!jsonEl) return [];
-  return [...jsonEl.querySelectorAll('.json-line')].filter((lineEl) => !lineEl.classList.contains('is-fold-hidden'));
-}
-
-function setActiveChangesModalLine(lineEl) {
-  const jsonEl = document.getElementById('changesModalJson');
-  if (!jsonEl || !lineEl) return;
-  jsonEl.querySelector('.json-line.is-active')?.classList.remove('is-active');
-  lineEl.classList.add('is-active');
-  changesModalViewState.activeLine = Number(lineEl.dataset.lineNumber);
-  lineEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-}
-
-function moveActiveChangesModalLine(direction) {
-  const visibleLines = getVisibleModalLineElements();
-  if (visibleLines.length === 0) return;
-
-  const currentIndex = visibleLines.findIndex((lineEl) => Number(lineEl.dataset.lineNumber) === changesModalViewState.activeLine);
-  const fallback = direction > 0 ? 0 : visibleLines.length - 1;
-  const startIndex = currentIndex >= 0 ? currentIndex : fallback;
-  const targetIndex = Math.max(0, Math.min(visibleLines.length - 1, startIndex + direction));
-  setActiveChangesModalLine(visibleLines[targetIndex]);
-}
-
-function isTypingTarget(target) {
-  if (!target) return false;
-  if (target.isContentEditable) return true;
-  const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 }
 
 async function copyChangesModalJson() {
@@ -637,64 +353,12 @@ function closeChangesModal() {
 }
 
 function initChangesModalBindings() {
-  const searchInput = document.getElementById('changesModalSearch');
-  const searchPrev = document.getElementById('changesModalSearchPrev');
-  const searchNext = document.getElementById('changesModalSearchNext');
   const copyButton = document.getElementById('changesModalCopy');
-  const wrapButton = document.getElementById('changesModalWrapToggle');
-  const fontDown = document.getElementById('changesModalFontDown');
-  const fontUp = document.getElementById('changesModalFontUp');
-  const collapseAll = document.getElementById('changesModalCollapseAll');
-  const expandAll = document.getElementById('changesModalExpandAll');
-
-  searchInput?.addEventListener('input', runChangesModalSearch);
-  searchInput?.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    stepChangesModalSearch(event.shiftKey ? -1 : 1);
-  });
-  searchPrev?.addEventListener('click', () => stepChangesModalSearch(-1));
-  searchNext?.addEventListener('click', () => stepChangesModalSearch(1));
   copyButton?.addEventListener('click', copyChangesModalJson);
-  wrapButton?.addEventListener('click', () => {
-    changesModalViewState.wrapEnabled = !changesModalViewState.wrapEnabled;
-    applyChangesModalWrapState();
-  });
-  fontDown?.addEventListener('click', () => {
-    changesModalViewState.fontStep = Math.max(-1, changesModalViewState.fontStep - 1);
-    applyChangesModalFontSize();
-  });
-  fontUp?.addEventListener('click', () => {
-    changesModalViewState.fontStep = Math.min(1, changesModalViewState.fontStep + 1);
-    applyChangesModalFontSize();
-  });
-  collapseAll?.addEventListener('click', () => setAllChangesModalSectionsCollapsed(true));
-  expandAll?.addEventListener('click', () => setAllChangesModalSectionsCollapsed(false));
 
   document.addEventListener('keydown', (event) => {
     const modal = document.getElementById('changesModal');
     if (!modal || modal.classList.contains('hidden')) return;
-
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
-      event.preventDefault();
-      searchInput?.focus();
-      searchInput?.select();
-      return;
-    }
-
-    if (!event.ctrlKey && !event.metaKey && !event.altKey && !isTypingTarget(event.target)) {
-      const key = event.key.toLowerCase();
-      if (key === 'j') {
-        event.preventDefault();
-        moveActiveChangesModalLine(1);
-        return;
-      }
-      if (key === 'k') {
-        event.preventDefault();
-        moveActiveChangesModalLine(-1);
-        return;
-      }
-    }
 
     if (event.key !== 'Escape') return;
     closeChangesModal();
