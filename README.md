@@ -103,10 +103,11 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 
 ### How does Theme mode work?
 
-- Theme cycles through `System`, `Dark`, and `Light` with adaptive ordering.
+- Theme toggles between two meaningful states: `System` and the opposite explicit theme.
 - `System` follows your OS/browser color scheme automatically.
 - When current mode is `System`, the next click switches to the opposite of your current system theme.
-- Example: if system is dark, cycle is `System -> Light -> Dark -> System`; if system is light, cycle is `System -> Dark -> Light -> System`.
+- Next click always returns to `System`.
+- Example: if system is dark, toggle is `System <-> Light`; if system is light, toggle is `System <-> Dark`.
 - Your selected mode is saved locally and reused on both app and README pages.
 
 ### Changed JSON readability tools
@@ -201,7 +202,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
 - Results side menu for quick jumps to Summary/Diff/Duplicate sections
-- Theme mode toggle with adaptive cycle + persistence (`System` / `Dark` / `Light`)
+- Theme mode toggle with persistence (`System` + opposite explicit theme)
 - In-app README guide (`readme.html`) with dismissible docs card
 - Stale-metric hint when settings change after analysis
 - Export options:
@@ -423,7 +424,7 @@ Additional clean-export metric:
 - Added Maximize JSON modal with readability improvements.
 - Added syntax highlighting and array-of-objects readability improvements.
 - Added side-nav Summary link and improved active-section highlighting behavior.
-- Added persistent theme mode toggle (`System` / `Dark` / `Light`) across app and README.
+- Added persistent theme mode toggle across app and README.
 - Restructured README for user-first guidance + comprehensive technical reference.
 
 ## Contribute

@@ -41,8 +41,6 @@ function nextThemeMode(mode) {
   const oppositeTheme = systemTheme === 'dark' ? 'light' : 'dark';
 
   if (mode === 'system') return oppositeTheme;
-  if (mode === oppositeTheme) return systemTheme;
-  if (mode === systemTheme) return 'system';
   return 'system';
 }
 
