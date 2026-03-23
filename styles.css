@@ -2,19 +2,6 @@ html {
   scroll-behavior: smooth;
 }
 
-:root {
-  color-scheme: light;
-}
-
-html[data-theme='dark'] {
-  color-scheme: dark;
-}
-
-.theme-toggle {
-  min-width: 8.75rem;
-  justify-content: center;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

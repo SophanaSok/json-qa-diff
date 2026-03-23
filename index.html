@@ -3,22 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>JSON Diff & QA – Bid Records</title>
-  <script>
-    (function initThemeEarly() {
-      const key = 'jsonQaTheme';
-      const storedTheme = localStorage.getItem(key);
-      const mode = (storedTheme === 'dark' || storedTheme === 'light' || storedTheme === 'system')
-        ? storedTheme
-        : 'system';
-      const theme = mode === 'system'
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : mode;
-      document.documentElement.setAttribute('data-theme', theme);
-      document.documentElement.setAttribute('data-theme-mode', mode);
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-    })();
-  </script>
+  <script src="theme.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
