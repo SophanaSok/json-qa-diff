@@ -152,6 +152,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 ## Table of Contents
 
 - [Core Features](#core-features)
+- [Project Structure](#project-structure)
 - [JSON Input Expectations](#json-input-expectations)
 - [Minimal Input Examples](#minimal-input-examples)
 - [Options](#options)
@@ -204,6 +205,8 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - Results side menu for quick jumps to Summary/Diff/Duplicate sections
 - Theme mode toggle with persistence (`System` + opposite explicit theme)
 - In-app README guide (`readme.html`) with dismissible docs card
+- Shared theme runtime module (`theme.js`) used by app + README pages
+- Shared cross-page theme styling (`shared.css`) with page-level CSS variable overrides
 - Stale-metric hint when settings change after analysis
 - Export options:
   - `diff_records.json`
@@ -211,6 +214,18 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - `duplicates_file2.json`
   - `duplicates_cross.json`
   - `changed_and_new.json`
+
+## Project Structure
+
+- `index.html`: main app shell
+- `app.js`: app logic (diffing, duplicate detection, rendering, exports)
+- `styles.css`: app-specific styling
+- `readme.html`: in-app documentation page shell
+- `readme.js`: README page rendering and anchor normalization
+- `readme.css`: README page-specific styling
+- `theme.js`: shared theme-mode behavior + persistence for all pages
+- `shared.css`: shared cross-page styles (for example, theme toggle)
+- `README.md`: user guide and technical reference source rendered by `readme.html`
 
 ## JSON Input Expectations
 
@@ -415,6 +430,13 @@ Additional clean-export metric:
 - `readme.html` uses CDN-hosted `github-markdown-css` and `marked` for documentation rendering.
 
 ## Changelog
+
+### 2026-03-23
+
+- Refactored inline scripts/styles into dedicated assets (`theme.js`, `readme.js`, `readme.css`, `shared.css`).
+- Centralized theme behavior in `theme.js` and kept two-state toggle behavior consistent across app + README.
+- Reconciled shared theme-toggle styling into `shared.css` with page-level variable customization.
+- Removed unused/redundant helper code and unified JSON source-value formatting paths in `app.js`.
 
 ### 2026-03-22
 
