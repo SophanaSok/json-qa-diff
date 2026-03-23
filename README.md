@@ -108,6 +108,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - When current mode is `System`, the next click switches to the opposite of your current system theme.
 - Next click always returns to `System`.
 - Example: if system is dark, toggle is `System <-> Light`; if system is light, toggle is `System <-> Dark`.
+- If no theme preference exists (or an invalid legacy value is found), mode defaults to `System` and is normalized in local storage.
 - Your selected mode is saved locally and reused on both app and README pages.
 
 ### Changed JSON readability tools
