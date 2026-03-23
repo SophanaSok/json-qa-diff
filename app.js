@@ -10,10 +10,19 @@ const tableFilterState = {
   diffType: 'all',
   changedField: 'all'
 };
+const tablePaginationState = {
+  diffPage: 1,
+  dupPage: 1,
+  pageSize: 200
+};
 const changesModalViewState = {
   plainLines: [],
   htmlLines: []
 };
+
+function yieldToMainThread() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 function normalizeSortValue(value) {
   if (value === null || value === undefined) return '';
@@ -376,7 +385,52 @@ function renderChangedFieldsCell(diffRow) {
 
   const encodedKey = encodeURIComponent(String(diffRow.key ?? ''));
 
-  return `<details class="changes-details"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json changes-json-inline">${buildBeautifiedModalChangesJson(diffRow)}</pre></details>`;
+  return `<details class="changes-details" ontoggle="handleChangesDetailsToggle(this, '${encodedKey}')"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json changes-json-inline hidden" data-changes-inline-for="${encodedKey}" aria-live="polite"></pre></details>`;
+}
+
+function handleChangesDetailsToggle(detailsEl, encodedKey) {
+  if (!detailsEl || !detailsEl.open) return;
+
+  const inlineEl = detailsEl.querySelector(`[data-changes-inline-for="${encodedKey}"]`);
+  if (!inlineEl) return;
+  if (inlineEl.dataset.loaded === 'true') return;
+
+  const row = getChangedDiffRowByKey(encodedKey);
+  if (!row) return;
+
+  inlineEl.innerHTML = buildBeautifiedModalChangesJson(row);
+  inlineEl.classList.remove('hidden');
+  inlineEl.dataset.loaded = 'true';
+}
+
+function getPaginatedRows(rows, requestedPage) {
+  const pageSize = tablePaginationState.pageSize;
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const currentPage = Math.min(Math.max(Number(requestedPage) || 1, 1), totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const pagedRows = rows.slice(start, start + pageSize);
+
+  return {
+    pagedRows,
+    currentPage,
+    totalPages,
+    totalRows,
+    pageSize
+  };
+}
+
+function renderTablePagination(tableName, currentPage, totalPages, totalRows, pageSize) {
+  if (totalRows <= pageSize) return '';
+
+  return `<div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+    <span>Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalRows)} of ${totalRows}</span>
+    <div class="flex items-center gap-2">
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" onclick="setTablePage('${tableName}', ${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+      <span>Page ${currentPage} / ${totalPages}</span>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" onclick="setTablePage('${tableName}', ${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+    </div>
+  </div>`;
 }
 
 function getSortedDiffRows() {
@@ -426,6 +480,8 @@ function getSortedDuplicateRows() {
 function renderDiffTable() {
   const diffs = state.diffs || [];
   const sortedFilteredDiffs = getSortedDiffRows();
+  const pagination = getPaginatedRows(sortedFilteredDiffs, tablePaginationState.diffPage);
+  tablePaginationState.diffPage = pagination.currentPage;
   const diffCountLabel = document.getElementById('diffCountLabel');
   if (diffCountLabel) {
     if (diffs.length === sortedFilteredDiffs.length) {
@@ -442,7 +498,7 @@ function renderDiffTable() {
     : `<table>
         <thead><tr>${sortableHeader('diff', 'key', 'ProjectCode')}${sortableHeader('diff', 'type', 'Type')}${sortableHeader('diff', 'title', 'Title')}${sortableHeader('diff', 'bidStatus', 'BidStatus')}${sortableHeader('diff', 'changedFields', 'Changed Fields')}</tr></thead>
         <tbody>
-          ${sortedFilteredDiffs.map(d => `
+          ${pagination.pagedRows.map(d => `
             <tr>
               <td><code>${d.key}</code></td>
               <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
@@ -451,13 +507,16 @@ function renderDiffTable() {
               <td>${renderChangedFieldsCell(d)}</td>
             </tr>`).join('')}
         </tbody>
-      </table>`;
+      </table>
+      ${renderTablePagination('diff', pagination.currentPage, pagination.totalPages, pagination.totalRows, pagination.pageSize)}`;
 
   document.getElementById('diffTable').innerHTML = dtHTML;
 }
 
 function renderDuplicateTable() {
   const allDups = getSortedDuplicateRows();
+  const pagination = getPaginatedRows(allDups, tablePaginationState.dupPage);
+  tablePaginationState.dupPage = pagination.currentPage;
   const dupCountLabel = document.getElementById('dupCountLabel');
   if (dupCountLabel) {
     dupCountLabel.textContent = `${allDups.length} record${allDups.length === 1 ? '' : 's'}`;
@@ -468,7 +527,7 @@ function renderDuplicateTable() {
     : `<table>
         <thead><tr>${sortableHeader('dup', 'projectCode', 'ProjectCode')}${sortableHeader('dup', 'title', 'Title')}${sortableHeader('dup', 'bidStatus', 'BidStatus')}${sortableHeader('dup', 'source', 'Source')}${sortableHeader('dup', 'dupType', 'Dup Type')}</tr></thead>
         <tbody>
-          ${allDups.map(r => `
+          ${pagination.pagedRows.map(r => `
             <tr>
               <td><code>${r[state.uk] || '—'}</code></td>
               <td>${(r.Title || '').slice(0, 60)}${r.Title?.length > 60 ? '…' : ''}</td>
@@ -477,8 +536,22 @@ function renderDuplicateTable() {
               <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">${r._dupType}</span></td>
             </tr>`).join('')}
         </tbody>
-      </table>`;
+      </table>
+      ${renderTablePagination('dup', pagination.currentPage, pagination.totalPages, pagination.totalRows, pagination.pageSize)}`;
   document.getElementById('dupTable').innerHTML = dupHTML;
+}
+
+function setTablePage(tableName, page) {
+  if (tableName === 'diff') {
+    tablePaginationState.diffPage = Math.max(1, Number(page) || 1);
+    renderDiffTable();
+    return;
+  }
+
+  if (tableName === 'dup') {
+    tablePaginationState.dupPage = Math.max(1, Number(page) || 1);
+    renderDuplicateTable();
+  }
 }
 
 function toggleTableSort(tableName, columnKey) {
@@ -499,6 +572,7 @@ function toggleTableSort(tableName, columnKey) {
 function setDiffTypeFilter(value) {
   const allowed = new Set(['all', 'added', 'removed', 'changed']);
   tableFilterState.diffType = allowed.has(value) ? value : 'all';
+  tablePaginationState.diffPage = 1;
   renderDiffTable();
 }
 
@@ -513,6 +587,7 @@ function setChangedFieldFilter(value, shouldRender = true) {
   const optionValues = new Set([...select.options].map((option) => option.value));
   tableFilterState.changedField = optionValues.has(value) ? value : 'all';
   select.value = tableFilterState.changedField;
+  tablePaginationState.diffPage = 1;
 
   if (shouldRender) renderDiffTable();
 }
@@ -847,7 +922,11 @@ async function run() {
 
   const diffs = [];
   const allKeys = new Set([...map1.keys(), ...map2.keys()]);
+  let diffCounter = 0;
   for (const key of allKeys) {
+    diffCounter += 1;
+    if (diffCounter % 2000 === 0) await yieldToMainThread();
+
     const r1 = map1.get(key), r2 = map2.get(key);
     if (r1 && r2) {
       const changes = fieldDiff(r1, r2);
@@ -857,8 +936,8 @@ async function run() {
           key,
           changes,
           record: r2,
-          file1Record: cloneRecord(r1),
-          file2Record: cloneRecord(r2)
+          file1Record: r1,
+          file2Record: r2
         });
       }
     } else if (r1) {
@@ -866,7 +945,7 @@ async function run() {
         type: 'removed',
         key,
         record: r1,
-        file1Record: cloneRecord(r1),
+        file1Record: r1,
         file2Record: null
       });
     } else {
@@ -875,13 +954,17 @@ async function run() {
         key,
         record: r2,
         file1Record: null,
-        file2Record: cloneRecord(r2)
+        file2Record: r2
       });
     }
   }
 
   const hmap1 = new Map();
+  let dedupeCounter1 = 0;
   for (const r of arr1) {
+    dedupeCounter1 += 1;
+    if (dedupeCounter1 % 2500 === 0) await yieldToMainThread();
+
     const h = recordHash(r, ignored);
     if (!hmap1.has(h)) hmap1.set(h, []);
     hmap1.get(h).push({ ...r, _source: 'file1' });
@@ -889,7 +972,11 @@ async function run() {
   const dups1 = [...hmap1.values()].filter(g => g.length > 1).flat();
 
   const hmap2 = new Map();
+  let dedupeCounter2 = 0;
   for (const r of arr2) {
+    dedupeCounter2 += 1;
+    if (dedupeCounter2 % 2500 === 0) await yieldToMainThread();
+
     const h = recordHash(r, ignored);
     if (!hmap2.has(h)) hmap2.set(h, []);
     hmap2.get(h).push({ ...r, _source: 'file2' });
@@ -909,6 +996,9 @@ async function run() {
   const dedupeFields = getDedupeFields();
   const cleanExportPayload = buildCleanExportPayload(arr1, arr2, raw1, uk, ignored, dedupeFields);
   const cleanExportCount = cleanExportPayload.result.length;
+
+  tablePaginationState.diffPage = 1;
+  tablePaginationState.dupPage = 1;
 
   state = {
     diffs,
