@@ -114,19 +114,14 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 
 - Expand inline changed JSON in Diff Records
 - Resize the inline JSON panel
-- Use Maximize JSON for a larger code-editor style modal view
+- Use Maximize JSON for a larger, dense code-view modal
 - See File 1 (`from`) and File 2 (`to`) highlights
 - Use syntax highlighting in the modal (keys, strings, numbers, booleans/null, punctuation)
 - View array-of-object values in a scan-friendly format
-- Use line numbers and active-line highlighting for easier review
-- Search changed JSON with inline token-level match highlighting
-- Navigate results with `Prev/Next`, `Enter`, or `Shift+Enter`
-- Navigate lines with keyboard (`j` / `k`)
-- Use `Ctrl/Cmd+F` to focus search and `Esc` to close the modal
-- Toggle wrap (`Wrap: On/Off`) for long content
-- Adjust modal font size (`A-` / `A+`)
+- Use line numbers and wrapped text for easier long-line review
+- Modal is optimized for dense, VS Code-like readability
+- Use `Esc` to close the modal
 - Copy modal JSON with one click (`Copy JSON`)
-- Fold and unfold changed-field blocks (`Collapse All` / `Expand All`)
 
 ## Troubleshooting
 
@@ -137,7 +132,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - Metrics changed after editing options:
   - Re-run Analyze because metrics and exports depend on the last analysis.
 - Long values in changed JSON are hard to read:
-  - Open Maximize JSON and use the wrapped modal view.
+  - Open Maximize JSON; text wrapping is enabled in the modal.
 
 ### Good defaults for first-time users
 
@@ -192,14 +187,12 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Source value highlighting
   - Resizable inline panel
   - Maximize JSON modal
-  - Code-editor modal with line numbers + active-line highlighting
+  - Dense code-view modal with line numbers
   - Modal syntax highlighting (keys, strings, numbers, booleans/null, punctuation)
-  - Search with token-level match highlighting + result navigation
-  - Keyboard shortcuts (`j/k`, `Enter/Shift+Enter`, `Ctrl/Cmd+F`, `Esc`)
-  - Wrap toggle (`Wrap: On/Off`)
-  - Font-size controls (`A-` / `A+`)
+  - Wrapped modal text for long values
+  - `Esc` to close modal
   - Copy JSON action
-  - Fold controls for changed-field blocks
+  - VS Code-like visual styling in the modal (dense spacing, editor-like gutter/colors)
   - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
 - Results side menu for quick jumps to Summary/Diff/Duplicate sections
@@ -299,12 +292,10 @@ Any object entry is treated as a record.
 - Summary includes changed-field count and field chips
 - Source legend and value highlights (`from` vs `to`)
 - Inline panel supports resize
-- Modal supports larger viewport and code-editor readability tools:
-  - Line numbers + active-line highlight
-  - Search with token-level match highlighting
-  - Keyboard shortcuts (`j/k`, `Enter/Shift+Enter`, `Ctrl/Cmd+F`, `Esc`)
-  - Wrap toggle, font controls, copy action
-  - Collapsible changed-field blocks
+- Modal supports larger viewport and dense code-view readability tools:
+  - Line numbers with wrapped text
+  - Syntax highlighting and source-value highlights
+  - Copy action and `Esc` close
 - Array-of-objects values render for at-a-glance scanning
 - Labels/legend communicate meaning in addition to color
 
@@ -437,6 +428,10 @@ Additional clean-export metric:
 - Centralized theme behavior in `theme.js` and kept two-state toggle behavior consistent across app + README.
 - Reconciled shared theme-toggle styling into `shared.css` with page-level variable customization.
 - Removed unused/redundant helper code and unified JSON source-value formatting paths in `app.js`.
+- Revamped Maximize JSON modal into a simplified dense code-view.
+- Removed modal editor-style controls (search/navigation, wrap toggle, font controls, fold controls).
+- Kept syntax highlighting, source-change highlighting, line numbers, copy action, and `Esc` close.
+- Updated modal styling to be more VS Code-like and enabled wrapped modal text.
 
 ### 2026-03-22
 
