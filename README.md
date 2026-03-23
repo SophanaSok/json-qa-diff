@@ -103,8 +103,10 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 
 ### How does Theme mode work?
 
-- Theme cycles through `System`, `Dark`, and `Light`.
+- Theme cycles through `System`, `Dark`, and `Light` with adaptive ordering.
 - `System` follows your OS/browser color scheme automatically.
+- When current mode is `System`, the next click switches to the opposite of your current system theme.
+- Example: if system is dark, cycle is `System -> Light -> Dark -> System`; if system is light, cycle is `System -> Dark -> Light -> System`.
 - Your selected mode is saved locally and reused on both app and README pages.
 
 ### Changed JSON readability tools
@@ -199,7 +201,7 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
   - Array-of-objects formatting for readability
 - Live record counters for Diff and Duplicate sections
 - Results side menu for quick jumps to Summary/Diff/Duplicate sections
-- Theme mode toggle with persistence (`System` / `Dark` / `Light`)
+- Theme mode toggle with adaptive cycle + persistence (`System` / `Dark` / `Light`)
 - In-app README guide (`readme.html`) with dismissible docs card
 - Stale-metric hint when settings change after analysis
 - Export options:
