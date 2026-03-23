@@ -446,9 +446,9 @@ details summary {
 .json-code {
   position: relative;
   padding: 0 0.85rem;
-  white-space: pre;
-  overflow-wrap: normal;
-  word-break: normal;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   color: #1e293b;
 }
 
