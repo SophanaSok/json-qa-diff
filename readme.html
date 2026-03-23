@@ -28,6 +28,12 @@
       --text: #24292f;
       --muted: #57606a;
       --link: #0969da;
+      --table-bg: #ffffff;
+      --table-border: #c8d1dc;
+      --table-text: #0f172a;
+      --table-head-bg: #eaf0f7;
+      --table-row-alt: #f7fafe;
+      --table-row-hover: #e6f0ff;
       color-scheme: light;
     }
 
@@ -38,6 +44,12 @@
       --text: #e2e8f0;
       --muted: #94a3b8;
       --link: #7dd3fc;
+      --table-bg: #0f172a;
+      --table-border: #334155;
+      --table-text: #e2e8f0;
+      --table-head-bg: #111f34;
+      --table-row-alt: #0b1528;
+      --table-row-hover: #1a2a42;
       color-scheme: dark;
     }
 
@@ -134,6 +146,37 @@
       background: var(--card-bg);
       padding: 24px;
       color: var(--text);
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--table-bg);
+      color: var(--table-text);
+      border: 1px solid var(--table-border);
+    }
+
+    .markdown-body table th,
+    .markdown-body table td {
+      border: 1px solid var(--table-border);
+      color: var(--table-text);
+    }
+
+    .markdown-body table th {
+      background: var(--table-head-bg);
+      font-weight: 600;
+    }
+
+    .markdown-body table tr:nth-child(odd) td {
+      background: var(--table-bg);
+    }
+
+    .markdown-body table tr:nth-child(even) td {
+      background: var(--table-row-alt);
+    }
+
+    .markdown-body table tr:hover td {
+      background: var(--table-row-hover);
     }
 
     html[data-theme='dark'] .markdown-body {
@@ -253,9 +296,13 @@
     }
 
     function nextThemeMode(mode) {
-      const index = themeModes.indexOf(mode);
-      if (index === -1) return 'system';
-      return themeModes[(index + 1) % themeModes.length];
+      const systemTheme = resolveThemeFromMode('system');
+      const oppositeTheme = systemTheme === 'dark' ? 'light' : 'dark';
+
+      if (mode === 'system') return oppositeTheme;
+      if (mode === oppositeTheme) return systemTheme;
+      if (mode === systemTheme) return 'system';
+      return 'system';
     }
 
     function applyTheme(mode) {

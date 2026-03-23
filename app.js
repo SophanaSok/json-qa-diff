@@ -37,9 +37,13 @@ function resolveThemeFromMode(mode) {
 }
 
 function nextThemeMode(mode) {
-  const index = THEME_MODES.indexOf(mode);
-  if (index === -1) return 'system';
-  return THEME_MODES[(index + 1) % THEME_MODES.length];
+  const systemTheme = resolveThemeFromMode('system');
+  const oppositeTheme = systemTheme === 'dark' ? 'light' : 'dark';
+
+  if (mode === 'system') return oppositeTheme;
+  if (mode === oppositeTheme) return systemTheme;
+  if (mode === systemTheme) return 'system';
+  return 'system';
 }
 
 function applyTheme(mode) {
