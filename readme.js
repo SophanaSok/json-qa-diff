@@ -70,13 +70,20 @@ function normalizeReadmeAnchors(container) {
 
     normalizeReadmeAnchors(container);
   } catch (error) {
-    container.innerHTML = [
-      '<div class="status error">',
-      '<strong>Could not load README.md.</strong><br>',
+    // Built as nodes: the error text is not markup and must not be parsed as such.
+    const status = document.createElement('div');
+    status.className = 'status error';
+    const heading = document.createElement('strong');
+    heading.textContent = 'Could not load README.md.';
+    status.append(
+      heading,
+      document.createElement('br'),
       'This documentation page loads README.md over HTTP (for example, GitHub Pages or a local dev server). ',
-      'If opened with file://, the browser may block file loading.<br><br>',
-      'Technical details: ' + (error && error.message ? error.message : String(error)),
-      '</div>'
-    ].join('');
+      'If opened with file://, the browser may block file loading.',
+      document.createElement('br'),
+      document.createElement('br'),
+      'Technical details: ' + (error && error.message ? error.message : String(error))
+    );
+    container.replaceChildren(status);
   }
 })();

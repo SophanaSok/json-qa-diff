@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="content-security-policy" content="default-src 'self';img-src 'self';font-src 'self';connect-src 'none';object-src 'none';base-uri 'none';form-action 'none'; script-src 'self'; style-src 'self';">
   <title>JSON Diff & QA – Bid Records</title>
   <script src="theme.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="styles.css">
+  <!-- Static Tailwind build (see tailwind/tailwind.config.js). Kept after styles.css, where the
+       Play CDN used to inject its generated <style>, so the cascade order is unchanged. -->
+  <link rel="stylesheet" href="tailwind.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
 
@@ -89,7 +92,7 @@
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
         </div>
         <div class="flex items-end">
-          <button onclick="run()"
+          <button type="button" data-action="run"
             class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-150 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-6.586-6.586A1 1 0 006.5 5.5v13a1 1 0 001.666.748l6.586-5.668a1 1 0 000-1.412z"/>
@@ -157,7 +160,7 @@
           </div>
           
           <div class="flex gap-2 ml-4 shrink-0">
-            <button onclick="dlDeduped()"
+            <button type="button" data-action="download-deduped"
               class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold py-2 px-5 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
@@ -178,7 +181,7 @@
           </div>
           <div class="flex items-center gap-2">
             <label for="diffTypeFilter" class="text-xs font-medium text-gray-500">Type</label>
-            <select id="diffTypeFilter" onchange="setDiffTypeFilter(this.value)"
+            <select id="diffTypeFilter"
               class="border border-gray-300 rounded-lg bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
               <option value="all" selected>All</option>
               <option value="added">Added</option>
@@ -186,12 +189,12 @@
               <option value="changed">Changed</option>
             </select>
             <label for="changedFieldFilter" class="text-xs font-medium text-gray-500">Changed Field</label>
-            <select id="changedFieldFilter" onchange="setChangedFieldFilter(this.value)"
+            <select id="changedFieldFilter"
               class="border border-gray-300 rounded-lg bg-white px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
               disabled>
               <option value="all" selected>All changed fields</option>
             </select>
-            <button onclick="dlDiff()"
+            <button type="button" data-action="download-diff"
               class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
@@ -212,15 +215,15 @@
             <p id="dupCountLabel" class="text-xs text-gray-500 mt-1">0 records</p>
           </div>
           <div class="flex gap-2">
-            <button onclick="dlDups('file1')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+            <button type="button" data-action="download-dups" data-dups="file1" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
               File 1 Dups
             </button>
-            <button onclick="dlDups('file2')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+            <button type="button" data-action="download-dups" data-dups="file2" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
               File 2 Dups
             </button>
-            <button onclick="dlDups('cross')" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+            <button type="button" data-action="download-dups" data-dups="cross" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
               Cross-File Dups
             </button>
@@ -233,14 +236,14 @@
   </main>
 
   <div id="changesModal" class="changes-modal hidden" role="dialog" aria-modal="true" aria-labelledby="changesModalTitle">
-    <div class="changes-modal-backdrop" onclick="closeChangesModal()"></div>
+    <div class="changes-modal-backdrop" data-action="close-changes-modal"></div>
     <div class="changes-modal-panel" role="document">
       <div class="changes-modal-header">
         <div>
           <h3 id="changesModalTitle" class="changes-modal-title">Changed Values</h3>
           <p id="changesModalMeta" class="changes-modal-meta"></p>
         </div>
-        <button id="changesModalClose" type="button" class="changes-modal-close" onclick="closeChangesModal()" aria-label="Close expanded changes view">Close</button>
+        <button id="changesModalClose" type="button" class="changes-modal-close" data-action="close-changes-modal" aria-label="Close expanded changes view">Close</button>
       </div>
       <div class="changes-modal-body">
         <div class="changes-json-toolbar" aria-label="JSON editor controls">

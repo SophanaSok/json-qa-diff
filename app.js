@@ -52,7 +52,7 @@ function sortIndicator(tableName, columnKey) {
 }
 
 function sortableHeader(tableName, columnKey, label) {
-  return `<th><button type="button" class="sort-header-btn" onclick="toggleTableSort('${tableName}', '${columnKey}')">${label}<span class="sort-indicator">${sortIndicator(tableName, columnKey)}</span></button></th>`;
+  return `<th><button type="button" class="sort-header-btn" data-sort-table="${escapeHtml(tableName)}" data-sort-key="${escapeHtml(columnKey)}">${escapeHtml(label)}<span class="sort-indicator">${sortIndicator(tableName, columnKey)}</span></button></th>`;
 }
 
 function escapeHtml(value) {
@@ -383,15 +383,17 @@ function renderChangedFieldsCell(diffRow) {
     .join('');
   const changedSummaryLabel = `${changedFields.length} field${changedFields.length === 1 ? '' : 's'} changed`;
 
-  const encodedKey = encodeURIComponent(String(diffRow.key ?? ''));
+  // The key comes from the uploaded file. It is URI-encoded so it survives as one token, and
+  // HTML-escaped because encodeURIComponent leaves ' ( ) ! * ~ untouched.
+  const encodedKey = escapeHtml(encodeURIComponent(String(diffRow.key ?? '')));
 
-  return `<details class="changes-details" ontoggle="handleChangesDetailsToggle(this, '${encodedKey}')"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" onclick="openChangesModalByKey('${encodedKey}')">Maximize JSON</button><pre class="changes-json changes-json-inline hidden" data-changes-inline-for="${encodedKey}" aria-live="polite"></pre></details>`;
+  return `<details class="changes-details" data-diff-key="${encodedKey}"><summary><span class="changed-summary-label">${changedSummaryLabel}</span><span class="changed-field-chip-list">${changedFieldChips}</span></summary><div class="changes-legend"><span class="changes-legend-chip changes-legend-chip-file1">File 1 value (from)</span><span class="changes-legend-chip changes-legend-chip-file2">File 2 value (to)</span></div><button type="button" class="changes-expand-btn" data-action="open-changes-modal" data-diff-key="${encodedKey}">Maximize JSON</button><pre class="changes-json changes-json-inline hidden" data-changes-inline-for="${encodedKey}" aria-live="polite"></pre></details>`;
 }
 
 function handleChangesDetailsToggle(detailsEl, encodedKey) {
   if (!detailsEl || !detailsEl.open) return;
 
-  const inlineEl = detailsEl.querySelector(`[data-changes-inline-for="${encodedKey}"]`);
+  const inlineEl = detailsEl.querySelector(':scope > [data-changes-inline-for]');
   if (!inlineEl) return;
   if (inlineEl.dataset.loaded === 'true') return;
 
@@ -426,9 +428,9 @@ function renderTablePagination(tableName, currentPage, totalPages, totalRows, pa
   return `<div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
     <span>Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalRows)} of ${totalRows}</span>
     <div class="flex items-center gap-2">
-      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" onclick="setTablePage('${tableName}', ${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" data-page-table="${escapeHtml(tableName)}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
       <span>Page ${currentPage} / ${totalPages}</span>
-      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" onclick="setTablePage('${tableName}', ${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}" data-page-table="${escapeHtml(tableName)}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
     </div>
   </div>`;
 }
@@ -500,10 +502,10 @@ function renderDiffTable() {
         <tbody>
           ${pagination.pagedRows.map(d => `
             <tr>
-              <td><code>${d.key}</code></td>
-              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${d.type}</span></td>
-              <td>${(d.record.Title || '').slice(0, 60)}${d.record.Title?.length > 60 ? '…' : ''}</td>
-              <td>${d.record.BidStatus || '—'}</td>
+              <td><code>${escapeHtml(d.key)}</code></td>
+              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${d.type === 'added' ? 'bg-green-100 text-green-800' : d.type === 'removed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(d.type)}</span></td>
+              <td>${escapeHtml((d.record.Title || '').slice(0, 60))}${d.record.Title?.length > 60 ? '…' : ''}</td>
+              <td>${escapeHtml(d.record.BidStatus || '—')}</td>
               <td>${renderChangedFieldsCell(d)}</td>
             </tr>`).join('')}
         </tbody>
@@ -529,11 +531,11 @@ function renderDuplicateTable() {
         <tbody>
           ${pagination.pagedRows.map(r => `
             <tr>
-              <td><code>${r[state.uk] || '—'}</code></td>
-              <td>${(r.Title || '').slice(0, 60)}${r.Title?.length > 60 ? '…' : ''}</td>
-              <td>${r.BidStatus || '—'}</td>
-              <td>${r._source}</td>
-              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">${r._dupType}</span></td>
+              <td><code>${escapeHtml(r[state.uk] || '—')}</code></td>
+              <td>${escapeHtml((r.Title || '').slice(0, 60))}${r.Title?.length > 60 ? '…' : ''}</td>
+              <td>${escapeHtml(r.BidStatus || '—')}</td>
+              <td>${escapeHtml(r._source)}</td>
+              <td><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">${escapeHtml(r._dupType)}</span></td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -1171,7 +1173,56 @@ function initDocumentationCard() {
   });
 }
 
+// Every control is wired here rather than through onclick/onchange/ontoggle attributes, so the
+// Content-Security-Policy can refuse every script that is not a file from this origin.
+function initActionBindings() {
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    const sortButton = target.closest('[data-sort-table]');
+    if (sortButton) {
+      toggleTableSort(sortButton.dataset.sortTable, sortButton.dataset.sortKey);
+      return;
+    }
+
+    const pageButton = target.closest('[data-page-table]');
+    if (pageButton) {
+      if (!pageButton.disabled) setTablePage(pageButton.dataset.pageTable, Number(pageButton.dataset.page));
+      return;
+    }
+
+    const actionEl = target.closest('[data-action]');
+    if (!actionEl) return;
+
+    switch (actionEl.dataset.action) {
+      case 'run': run(); break;
+      case 'download-deduped': dlDeduped(); break;
+      case 'download-diff': dlDiff(); break;
+      case 'download-dups': dlDups(actionEl.dataset.dups); break;
+      case 'open-changes-modal': openChangesModalByKey(actionEl.dataset.diffKey); break;
+      case 'close-changes-modal': closeChangesModal(); break;
+      default: break;
+    }
+  });
+
+  document.getElementById('diffTypeFilter')?.addEventListener('change', (event) => {
+    setDiffTypeFilter(event.target.value);
+  });
+  document.getElementById('changedFieldFilter')?.addEventListener('change', (event) => {
+    setChangedFieldFilter(event.target.value);
+  });
+
+  // `toggle` does not bubble, so listen in the capture phase for the row <details> elements.
+  document.getElementById('diffTable')?.addEventListener('toggle', (event) => {
+    const details = event.target;
+    if (!(details instanceof HTMLDetailsElement) || !details.matches('.changes-details')) return;
+    handleChangesDetailsToggle(details, details.dataset.diffKey);
+  }, true);
+}
+
 window.jsonQaTheme?.initThemeToggle();
+initActionBindings();
 initDocumentationCard();
 initStaleMetricHint();
 initResultsSideMenuHighlight();
