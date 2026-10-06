@@ -223,7 +223,23 @@ Upload two JSON files, click Analyze, review changes/duplicates, and download th
 - `readme.css`: README page-specific styling
 - `theme.js`: shared theme-mode behavior + persistence for all pages
 - `shared.css`: shared cross-page styles (for example, theme toggle)
+- `tailwind.css`: generated Tailwind utility classes used by `index.html` and `app.js` (committed; see below)
+- `tailwind/`: Tailwind config and input used to regenerate `tailwind.css`
+- `vendor/`: pinned copies of `marked` and `github-markdown-css` used by `readme.html`, with their licenses and hashes
 - `README.md`: user guide and technical reference source rendered by `readme.html`
+
+### Regenerating `tailwind.css`
+
+The page uses a static Tailwind build instead of the Tailwind Play CDN script. After adding or
+changing Tailwind classes in `index.html` or `app.js` (including classes written into strings in
+`app.js`), regenerate it from the project directory and commit the result:
+
+```sh
+npx --yes tailwindcss@3.4.17 -c tailwind/tailwind.config.js -i tailwind/input.css -o tailwind.css
+```
+
+Tailwind only finds complete class names written out in the source, so do not build class names
+by joining strings.
 
 ## JSON Input Expectations
 
@@ -424,9 +440,18 @@ Additional clean-export metric:
 ## Privacy and Security
 
 - Processing is local in browser; no server-side data processing.
-- `readme.html` uses CDN-hosted `github-markdown-css` and `marked` for documentation rendering.
+- Both pages carry a Content-Security-Policy that only runs scripts and styles served from this site. The app page allows no network requests at all (`connect-src 'none'`); the README page may fetch `README.md` from this site and show the badge images from `github.com` and `img.shields.io`.
+- No third-party scripts: Tailwind is a committed static stylesheet, and `marked` / `github-markdown-css` are pinned copies in `vendor/`.
+- Text from the JSON files (keys, field names, values) is always inserted as text, never as HTML, and the controls are wired with `addEventListener` rather than inline `onclick` attributes, so the policy can block every inline script.
 
 ## Changelog
+
+### 2026-10-05
+
+- Escaped key, Title and BidStatus values in the Diff and Duplicate tables; a crafted file could previously run script in the page.
+- Replaced inline `onclick` / `onchange` / `ontoggle` attributes with event listeners.
+- Replaced the Tailwind Play CDN with a committed static build (`tailwind.css`), and the CDN copies of `marked` and `github-markdown-css` with pinned files in `vendor/`.
+- Added a Content-Security-Policy to `index.html` and `readme.html`.
 
 ### 2026-03-23
 
